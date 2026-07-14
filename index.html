@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZIP2Text Dumper v2.1（修正版）</title>
+    <title>ZIP2Text Dumper v2.1（fflate修正版）</title>
     <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js">
     </script>
     <style>
@@ -96,7 +96,7 @@
     <div class="ad-side" id="adSide"><div class="ad-placeholder">📢 広告枠<br /><span style="font-size:11px;color:#cbd5e1;">(300×250 など)</span></div></div>
     <div class="container">
         <header class="app-header">
-            <h1>📦 ZIP2Text Dumper <small>v2.1（修正版）</small></h1>
+            <h1>📦 ZIP2Text Dumper <small>v2.1（fflate修正版）</small></h1>
             <div class="lang-toggle" id="langToggle">
                 <button class="active" data-lang="ja">日本語</button>
                 <button data-lang="en">English</button>
@@ -871,12 +871,19 @@
         }
 
         // ================================================================
-        // 10. Worker コード生成（fflate を直接使用）
+        // 10. Worker コード生成（fflate を正しく参照）
         // ================================================================
         function generateWorkerCode() {
             return `
                 // Worker: fflate の Unzip を直接使用
                 importScripts('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
+
+                // ★ fflate を安全に参照
+                const fflate = self.fflate;
+                if (!fflate) {
+                    postMessage({ type: 'error', message: 'fflate の読み込みに失敗しました' });
+                    self.close();
+                }
 
                 let cancelled = false;
                 let config = null;
@@ -887,6 +894,7 @@
                 let isFirstFileInJson = true;
                 let totalChunks = 0;
                 let receivedChunks = 0;
+                let lastNotifyTime = 0;
 
                 // ---- ユーティリティ ----
                 const MAGIC_BYTES = {
@@ -979,7 +987,6 @@
 
                 function processFile(fileName, data, fileSize, cfg) {
                     if (cancelled) return;
-                    // 除外チェックを先に
                     if (matchPattern(fileName, cfg.excludeList)) {
                         postMessage({ type: 'log', text: '⏭ 除外: ' + fileName, level: 'warning' });
                         return;
@@ -992,7 +999,6 @@
                         lastNotifyTime = now;
                     }
 
-                    // サイズエラー
                     if (cfg.sizeAction === 'error' && fileSize > cfg.thresholdBytes) {
                         postMessage({ type: 'error', message: 'ファイルサイズ超過: ' + fileName });
                         self.close();
@@ -1030,7 +1036,6 @@
                         contentText = text;
                     }
 
-                    // 出力
                     if (cfg.outputFormat === 'json') {
                         if (!isJsonMode) {
                             isJsonMode = true;
@@ -1054,8 +1059,6 @@
                 }
 
                 // ---- メッセージ受信 ----
-                let lastNotifyTime = 0;
-
                 self.onmessage = (e) => {
                     const msg = e.data;
                     try {
@@ -1227,7 +1230,7 @@
         async function init() {
             updateI18n();
             updateStatus();
-            console.log('📦 ZIP2Text Dumper v2.1（修正版）起動');
+            console.log('📦 ZIP2Text Dumper v2.1（fflate修正版）起動');
             await initIndexedDB();
         }
         init().catch(console.error);
