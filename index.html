@@ -871,22 +871,14 @@
         }
 
         // ================================================================
-        // 10. Worker コード生成（fflate の参照を厳格に修正、return 削除）
+        // 10. Worker コード生成（fflate 読み込みエラーと構文エラーを修正）
         // ================================================================
         function generateWorkerCode() {
             return `
                 // Worker: fflate の Unzip を直接使用
                 importScripts('https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js');
 
-                // ★ fflate を様々な可能性から取得
-                const fflate = self.fflate || self.f || self;
-                if (!fflate || typeof fflate.Unzip !== 'function') {
-                    postMessage({ type: 'error', message: 'fflate の読み込みに失敗しました (Unzip が見つかりません)' });
-                    self.close();
-                    // return;  ← 削除（トップレベルで return は使えない）
-                }
-                const Unzip = fflate.Unzip;
-
+                // 変数宣言（トップレベル）
                 let cancelled = false;
                 let config = null;
                 let unzip = null;
@@ -1060,91 +1052,103 @@
                     postMessage({ type: 'log', text: (isBinary ? '🔷 バイナリ ' : '📄 テキスト ') + fileName + ' (' + formatSize(fileSize) + ')' });
                 }
 
-                // ---- メッセージ受信 ----
-                self.onmessage = (e) => {
-                    const msg = e.data;
-                    try {
-                        if (msg.type === 'start') {
-                            cancelled = false;
-                            fileCounter = 0;
-                            filePaths = [];
-                            isJsonMode = false;
-                            isFirstFileInJson = true;
-                            config = msg.config;
-                            totalChunks = msg.totalChunks || 0;
-                            receivedChunks = 0;
+                // ---- fflate の読み込みをチェック（トップレベルで return は使わない） ----
+                if (typeof self.fflate === 'undefined') {
+                    postMessage({ type: 'error', message: 'fflate の読み込みに失敗しました (self.fflate が undefined)' });
+                    self.close();
+                } else {
+                    const fflate = self.fflate;
+                    if (typeof fflate.Unzip !== 'function') {
+                        postMessage({ type: 'error', message: 'fflate.Unzip がコンストラクタではありません (type: ' + typeof fflate.Unzip + ')' });
+                        self.close();
+                    } else {
+                        // ---- メッセージ受信 ----
+                        self.onmessage = (e) => {
+                            const msg = e.data;
+                            try {
+                                if (msg.type === 'start') {
+                                    cancelled = false;
+                                    fileCounter = 0;
+                                    filePaths = [];
+                                    isJsonMode = false;
+                                    isFirstFileInJson = true;
+                                    config = msg.config;
+                                    totalChunks = msg.totalChunks || 0;
+                                    receivedChunks = 0;
 
-                            unzip = new Unzip((file) => {
-                                let chunks = [];
-                                let size = 0;
-                                file.ondata = (err, chunk, final) => {
-                                    if (cancelled) return;
-                                    if (err) {
-                                        const errorMsg = '解凍エラー: ' + (file.name || '') + ' - ' + err.message;
-                                        postMessage({ type: 'log', text: '⚠️ ' + errorMsg, level: 'error' });
-                                        if (!config.skipCompressionErrors) {
-                                            postMessage({ type: 'error', message: errorMsg });
-                                            self.close();
-                                            return;
+                                    unzip = new fflate.Unzip((file) => {
+                                        let chunks = [];
+                                        let size = 0;
+                                        file.ondata = (err, chunk, final) => {
+                                            if (cancelled) return;
+                                            if (err) {
+                                                const errorMsg = '解凍エラー: ' + (file.name || '') + ' - ' + err.message;
+                                                postMessage({ type: 'log', text: '⚠️ ' + errorMsg, level: 'error' });
+                                                if (!config.skipCompressionErrors) {
+                                                    postMessage({ type: 'error', message: errorMsg });
+                                                    self.close();
+                                                    return;
+                                                }
+                                                chunks = [];
+                                                size = 0;
+                                                return;
+                                            }
+                                            if (chunk) {
+                                                chunks.push(chunk);
+                                                size += chunk.length;
+                                            }
+                                            if (final) {
+                                                const data = concatChunks(chunks);
+                                                processFile(file.name, data, size, config);
+                                                chunks = [];
+                                                size = 0;
+                                            }
+                                        };
+                                        file.start();
+                                    });
+
+                                    postMessage({ type: 'log', text: 'Worker 初期化完了', level: 'info' });
+
+                                } else if (msg.type === 'chunk') {
+                                    if (!unzip || cancelled) return;
+                                    receivedChunks++;
+                                    unzip.push(msg.data, false);
+                                    if (receivedChunks % 10 === 0 || receivedChunks === totalChunks) {
+                                        postMessage({
+                                            type: 'progress',
+                                            current: receivedChunks,
+                                            total: totalChunks,
+                                            file: '読み込み中... (' + receivedChunks + '/' + totalChunks + ')',
+                                            isEstimated: true
+                                        });
+                                    }
+
+                                } else if (msg.type === 'end') {
+                                    if (!unzip || cancelled) return;
+                                    unzip.push(new Uint8Array(0), true);
+
+                                    setTimeout(() => {
+                                        if (cancelled) return;
+                                        if (isJsonMode) {
+                                            const treeRoot = buildTreeFromPaths(filePaths);
+                                            const treeStr = buildTreeString(treeRoot);
+                                            postMessage({ type: 'data', chunk: treeStr });
+                                            postMessage({ type: 'data', chunk: '","files":' });
+                                            postMessage({ type: 'data', chunk: '}}' });
                                         }
-                                        chunks = [];
-                                        size = 0;
-                                        return;
-                                    }
-                                    if (chunk) {
-                                        chunks.push(chunk);
-                                        size += chunk.length;
-                                    }
-                                    if (final) {
-                                        const data = concatChunks(chunks);
-                                        processFile(file.name, data, size, config);
-                                        chunks = [];
-                                        size = 0;
-                                    }
-                                };
-                                file.start();
-                            });
+                                        postMessage({ type: 'done', totalFiles: fileCounter, log: '処理完了: ' + fileCounter + ' ファイル' });
+                                    }, 50);
 
-                            postMessage({ type: 'log', text: 'Worker 初期化完了', level: 'info' });
-
-                        } else if (msg.type === 'chunk') {
-                            if (!unzip || cancelled) return;
-                            receivedChunks++;
-                            unzip.push(msg.data, false);
-                            if (receivedChunks % 10 === 0 || receivedChunks === totalChunks) {
-                                postMessage({
-                                    type: 'progress',
-                                    current: receivedChunks,
-                                    total: totalChunks,
-                                    file: '読み込み中... (' + receivedChunks + '/' + totalChunks + ')',
-                                    isEstimated: true
-                                });
-                            }
-
-                        } else if (msg.type === 'end') {
-                            if (!unzip || cancelled) return;
-                            unzip.push(new Uint8Array(0), true);
-
-                            setTimeout(() => {
-                                if (cancelled) return;
-                                if (isJsonMode) {
-                                    const treeRoot = buildTreeFromPaths(filePaths);
-                                    const treeStr = buildTreeString(treeRoot);
-                                    postMessage({ type: 'data', chunk: treeStr });
-                                    postMessage({ type: 'data', chunk: '","files":' });
-                                    postMessage({ type: 'data', chunk: '}}' });
+                                } else if (msg.type === 'cancel') {
+                                    cancelled = true;
+                                    postMessage({ type: 'cancelled' });
                                 }
-                                postMessage({ type: 'done', totalFiles: fileCounter, log: '処理完了: ' + fileCounter + ' ファイル' });
-                            }, 50);
-
-                        } else if (msg.type === 'cancel') {
-                            cancelled = true;
-                            postMessage({ type: 'cancelled' });
-                        }
-                    } catch (err) {
-                        postMessage({ type: 'error', message: 'Worker内部エラー: ' + (err.message || err) });
+                            } catch (err) {
+                                postMessage({ type: 'error', message: 'Worker内部エラー: ' + (err.message || err) });
+                            }
+                        };
                     }
-                };
+                }
             `;
         }
 
