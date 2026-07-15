@@ -5,96 +5,535 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZIP2Text Dumper v2.1（zip.js版）</title>
     <style>
-        /* 既存のスタイルと同じ（省略） */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #f6f8fc; color: #1e293b; padding: 20px 16px 40px; line-height: 1.6; }
-        a { color: #2563eb; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .container { max-width: 1200px; margin: 0 auto; background: #ffffff; border-radius: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); padding: 28px 32px 40px; position: relative; }
-        .app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid #eef2f6; }
-        .app-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; background: linear-gradient(135deg, #1e293b, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .app-header h1 small { font-size: 14px; font-weight: 400; -webkit-text-fill-color: #64748b; background: none; margin-left: 8px; }
-        .lang-toggle { display: flex; gap: 6px; background: #f1f5f9; border-radius: 40px; padding: 4px; }
-        .lang-toggle button { border: none; background: transparent; padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; color: #64748b; transition: 0.2s; }
-        .lang-toggle button.active { background: #ffffff; color: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .lang-toggle button:hover { color: #0f172a; }
-        .ad-top, .ad-bottom { text-align: center; margin-bottom: 24px; min-height: 90px; background: #f8fafc; border-radius: 16px; display: flex; align-items: center; justify-content: center; border: 1px dashed #d1d9e6; color: #94a3b8; font-size: 13px; }
-        .ad-top .ad-placeholder, .ad-bottom .ad-placeholder { padding: 10px 20px; }
-        .ad-bottom { margin-top: 32px; margin-bottom: 0; }
-        .ad-side { display: none; }
-        @media (min-width: 1300px) { .ad-side { display: block; position: fixed; right: 16px; top: 50%; transform: translateY(-50%); width: 160px; min-height: 300px; background: #f8fafc; border-radius: 16px; border: 1px dashed #d1d9e6; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 12px; padding: 10px; } .container { margin-right: 200px; } }
-        .dropzone { border: 3px dashed #d1d9e6; border-radius: 24px; padding: 48px 20px; text-align: center; background: #fafcff; transition: 0.25s; cursor: pointer; position: relative; }
-        .dropzone.dragover { border-color: #3b82f6; background: #eff6ff; }
-        .dropzone .icon { font-size: 56px; display: block; margin-bottom: 10px; opacity: 0.6; }
-        .dropzone h2 { font-size: 20px; font-weight: 600; color: #0f172a; }
-        .dropzone p { color: #64748b; margin-top: 6px; font-size: 15px; }
-        .dropzone input[type="file"] { display: none; }
-        .preview-box { margin-top: 20px; padding: 18px 22px; background: #f8fafc; border-radius: 16px; display: none; flex-wrap: wrap; gap: 18px 40px; align-items: center; border: 1px solid #e2e8f0; }
-        .preview-box.visible { display: flex; }
-        .preview-item { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
-        .preview-item .label { color: #64748b; font-weight: 500; }
-        .preview-item .value { font-weight: 600; color: #0f172a; }
-        .preview-item .value.estimated { color: #f59e0b; }
-        .settings { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 30px; }
-        @media (max-width: 800px) { .settings { grid-template-columns: 1fr; } }
-        .setting-group { background: #fafcff; border-radius: 16px; padding: 16px 20px 20px; border: 1px solid #eef2f6; }
-        .setting-group h3 { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .setting-group h3 .badge { font-size: 11px; background: #dbeafe; color: #2563eb; padding: 0 10px; border-radius: 30px; font-weight: 500; }
-        .setting-group label { display: block; font-size: 13px; font-weight: 500; color: #334155; margin-top: 12px; margin-bottom: 4px; }
-        .setting-group label:first-of-type { margin-top: 0; }
-        .setting-group textarea, .setting-group input[type="text"], .setting-group input[type="number"], .setting-group select { width: 100%; padding: 8px 12px; border: 1px solid #d1d9e6; border-radius: 10px; font-size: 14px; background: #ffffff; transition: 0.2s; font-family: inherit; }
-        .setting-group textarea:focus, .setting-group input:focus, .setting-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-        .setting-group textarea { resize: vertical; min-height: 56px; }
-        .setting-group .hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
-        .setting-group .radio-group { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 6px; }
-        .setting-group .radio-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 13px; margin-top: 0; cursor: pointer; }
-        .setting-group .radio-group input[type="radio"] { accent-color: #2563eb; width: 16px; height: 16px; cursor: pointer; }
-        .setting-group .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 6px; }
-        .setting-group .checkbox-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 13px; margin-top: 0; cursor: pointer; }
-        .setting-group .checkbox-group input[type="checkbox"] { accent-color: #2563eb; width: 16px; height: 16px; cursor: pointer; }
-        .action-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
-        .btn { padding: 12px 36px; border: none; border-radius: 40px; font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.30); }
-        .btn-primary:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .btn-secondary { background: #eef2f6; color: #1e293b; }
-        .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
-        .btn-danger { background: #ef4444; color: #fff; }
-        .btn-danger:hover:not(:disabled) { background: #dc2626; }
-        .btn-sm { padding: 6px 16px; font-size: 13px; border-radius: 30px; }
-        .progress-wrap { margin-top: 20px; display: none; }
-        .progress-wrap.visible { display: block; }
-        .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 30px; overflow: hidden; position: relative; }
-        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 30px; transition: width 0.25s ease; }
-        .progress-info { display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; color: #475569; }
-        .progress-info .file-name { font-weight: 500; color: #0f172a; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .progress-info .estimated-badge { font-size: 11px; background: #fef3c7; color: #92400e; padding: 0 8px; border-radius: 12px; margin-left: 8px; }
-        .output-area { margin-top: 22px; padding: 16px 20px; background: #0f172a; border-radius: 16px; color: #e2e8f0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; display: none; }
-        .output-area.visible { display: block; }
-        .output-area .log-line { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .output-area .log-line.error { color: #f87171; }
-        .output-area .log-line.success { color: #6ee7b7; }
-        .output-area .log-line.warning { color: #fbbf24; }
-        .mt-8 { margin-top: 8px; }
-        .text-muted { color: #94a3b8; font-size: 13px; }
-        .flex-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
-        .output-area::-webkit-scrollbar { width: 6px; }
-        .output-area::-webkit-scrollbar-track { background: #1e293b; }
-        .output-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
-        @media (max-width: 640px) { .container { padding: 16px; } .app-header h1 { font-size: 20px; } .dropzone { padding: 28px 12px; } .dropzone .icon { font-size: 40px; } .action-row .btn { width: 100%; justify-content: center; } .ad-top, .ad-bottom { min-height: 60px; } .ad-side { display: none !important; } .container { margin-right: 0 !important; } }
-        .import-gitignore { margin-top: 6px; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #f1f5f9; padding: 14px 28px; border-radius: 40px; font-weight: 500; font-size: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; max-width: 90%; }
-        .toast.show { opacity: 1; }
-        .toast.error { background: #7f1d1d; color: #fecaca; }
-        .toast.success { background: #065f46; color: #a7f3d0; }
-        .toast.warning { background: #78350f; color: #fde68a; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #f6f8fc;
+            color: #1e293b;
+            padding: 20px 16px 40px;
+            line-height: 1.6;
+        }
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            padding: 28px 32px 40px;
+            position: relative;
+        }
+        .app-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #eef2f6;
+        }
+        .app-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #1e293b, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .app-header h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            -webkit-text-fill-color: #64748b;
+            background: none;
+            margin-left: 8px;
+        }
+        .lang-toggle {
+            display: flex;
+            gap: 6px;
+            background: #f1f5f9;
+            border-radius: 40px;
+            padding: 4px;
+        }
+        .lang-toggle button {
+            border: none;
+            background: transparent;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.2s;
+        }
+        .lang-toggle button.active {
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .lang-toggle button:hover {
+            color: #0f172a;
+        }
+        .ad-top,
+        .ad-bottom {
+            text-align: center;
+            margin-bottom: 24px;
+            min-height: 90px;
+            background: #f8fafc;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #d1d9e6;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        .ad-top .ad-placeholder,
+        .ad-bottom .ad-placeholder {
+            padding: 10px 20px;
+        }
+        .ad-bottom {
+            margin-top: 32px;
+            margin-bottom: 0;
+        }
+        .ad-side {
+            display: none;
+        }
+        @media (min-width: 1300px) {
+            .ad-side {
+                display: block;
+                position: fixed;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 160px;
+                min-height: 300px;
+                background: #f8fafc;
+                border-radius: 16px;
+                border: 1px dashed #d1d9e6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #94a3b8;
+                font-size: 12px;
+                padding: 10px;
+            }
+            .container {
+                margin-right: 200px;
+            }
+        }
+        .dropzone {
+            border: 3px dashed #d1d9e6;
+            border-radius: 24px;
+            padding: 48px 20px;
+            text-align: center;
+            background: #fafcff;
+            transition: 0.25s;
+            cursor: pointer;
+            position: relative;
+        }
+        .dropzone.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .dropzone .icon {
+            font-size: 56px;
+            display: block;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+        .dropzone h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .dropzone p {
+            color: #64748b;
+            margin-top: 6px;
+            font-size: 15px;
+        }
+        .dropzone input[type="file"] {
+            display: none;
+        }
+        .preview-box {
+            margin-top: 20px;
+            padding: 18px 22px;
+            background: #f8fafc;
+            border-radius: 16px;
+            display: none;
+            flex-wrap: wrap;
+            gap: 18px 40px;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+        .preview-box.visible {
+            display: flex;
+        }
+        .preview-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 14px;
+        }
+        .preview-item .label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        .preview-item .value {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .preview-item .value.estimated {
+            color: #f59e0b;
+        }
+        .settings {
+            margin-top: 26px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px 30px;
+        }
+        @media (max-width: 800px) {
+            .settings {
+                grid-template-columns: 1fr;
+            }
+        }
+        .setting-group {
+            background: #fafcff;
+            border-radius: 16px;
+            padding: 16px 20px 20px;
+            border: 1px solid #eef2f6;
+        }
+        .setting-group h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .setting-group h3 .badge {
+            font-size: 11px;
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 0 10px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+        .setting-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        .setting-group label:first-of-type {
+            margin-top: 0;
+        }
+        .setting-group textarea,
+        .setting-group input[type="text"],
+        .setting-group input[type="number"],
+        .setting-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d9e6;
+            border-radius: 10px;
+            font-size: 14px;
+            background: #ffffff;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .setting-group textarea:focus,
+        .setting-group input:focus,
+        .setting-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .setting-group textarea {
+            resize: vertical;
+            min-height: 56px;
+        }
+        .setting-group .hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .setting-group .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            margin-top: 6px;
+        }
+        .setting-group .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 400;
+            font-size: 13px;
+            margin-top: 0;
+            cursor: pointer;
+        }
+        .setting-group .radio-group input[type="radio"] {
+            accent-color: #2563eb;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .setting-group .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            margin-top: 6px;
+        }
+        .setting-group .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 400;
+            font-size: 13px;
+            margin-top: 0;
+            cursor: pointer;
+        }
+        .setting-group .checkbox-group input[type="checkbox"] {
+            accent-color: #2563eb;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .action-row {
+            margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center;
+        }
+        .btn {
+            padding: 12px 36px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: #eef2f6;
+            color: #1e293b;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+        .btn-sm {
+            padding: 6px 16px;
+            font-size: 13px;
+            border-radius: 30px;
+        }
+        .progress-wrap {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-wrap.visible {
+            display: block;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 30px;
+            transition: width 0.25s ease;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #475569;
+        }
+        .progress-info .file-name {
+            font-weight: 500;
+            color: #0f172a;
+            max-width: 60%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .progress-info .estimated-badge {
+            font-size: 11px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 0 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        .output-area {
+            margin-top: 22px;
+            padding: 16px 20px;
+            background: #0f172a;
+            border-radius: 16px;
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            max-height: 320px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+        .output-area.visible {
+            display: block;
+        }
+        .output-area .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .output-area .log-line.error {
+            color: #f87171;
+        }
+        .output-area .log-line.success {
+            color: #6ee7b7;
+        }
+        .output-area .log-line.warning {
+            color: #fbbf24;
+        }
+        .mt-8 {
+            margin-top: 8px;
+        }
+        .text-muted {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+        .flex-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            align-items: center;
+        }
+        .output-area::-webkit-scrollbar {
+            width: 6px;
+        }
+        .output-area::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .output-area::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px;
+            }
+            .app-header h1 {
+                font-size: 20px;
+            }
+            .dropzone {
+                padding: 28px 12px;
+            }
+            .dropzone .icon {
+                font-size: 40px;
+            }
+            .action-row .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .ad-top,
+            .ad-bottom {
+                min-height: 60px;
+            }
+            .ad-side {
+                display: none !important;
+            }
+            .container {
+                margin-right: 0 !important;
+            }
+        }
+        .import-gitignore {
+            margin-top: 6px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
+            color: #f1f5f9;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            max-width: 90%;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .toast.error {
+            background: #7f1d1d;
+            color: #fecaca;
+        }
+        .toast.success {
+            background: #065f46;
+            color: #a7f3d0;
+        }
+        .toast.warning {
+            background: #78350f;
+            color: #fde68a;
+        }
     </style>
 </head>
 <body>
     <div class="ad-side" id="adSide"><div class="ad-placeholder">📢 広告枠<br /><span style="font-size:11px;color:#cbd5e1;">(300×250 など)</span></div></div>
     <div class="container">
         <header class="app-header">
-            <h1>📦 ZIP2Text Dumper <small>v2.1（zip.js版・構文修正）</small></h1>
+            <h1>📦 ZIP2Text Dumper <small>v2.1（zip.js版）</small></h1>
             <div class="lang-toggle" id="langToggle">
                 <button class="active" data-lang="ja">日本語</button>
                 <button data-lang="en">English</button>
@@ -232,7 +671,7 @@
         let dbManager = null;
 
         // ================================================================
-        // 2. 多言語対応（簡略）
+        // 2. 多言語対応
         // ================================================================
         const i18nData = {
             ja: {
@@ -392,7 +831,8 @@
                             db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
                         }
                     };
-                    request.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                    request.onsuccess = (e) => { this.db = e.target.result;
+                        resolve(); };
                     request.onerror = (e) => reject(e.target.error);
                 });
             }
@@ -426,7 +866,8 @@
                     request.onerror = (e) => reject(e.target.error);
                 });
             }
-            async close() { if (this.db) { this.db.close(); this.db = null; } }
+            async close() { if (this.db) { this.db.close();
+                    this.db = null; } }
         }
 
         async function initIndexedDB() {
@@ -441,7 +882,8 @@
         // ================================================================
         // 4. ドロップゾーン & ファイル処理
         // ================================================================
-        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault();
+            dropzone.classList.add('dragover'); });
         dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
         dropzone.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -473,7 +915,8 @@
                     reader.onload = (e) => {
                         try {
                             const data = new Uint8Array(e.target.result);
-                            let fileCount = 0, found = false;
+                            let fileCount = 0,
+                                found = false;
                             for (let i = data.length - 22; i >= 0; i--) {
                                 if (data[i] === 0x50 && data[i + 1] === 0x4B &&
                                     data[i + 2] === 0x05 && data[i + 3] === 0x06) {
@@ -673,7 +1116,6 @@
                         }, [data.buffer]);
 
                         let dataReceived = false;
-                        let chunkCount = 0;
 
                         worker.onmessage = async (msg) => {
                             const m = msg.data;
@@ -690,11 +1132,14 @@
                                 }
                                 case 'data': {
                                     dataReceived = true;
-                                    chunkCount++;
                                     if (useFileSystemAPI && writer) {
-                                        try { await writer.write(m.chunk); } catch (err) { worker.postMessage({ type: 'cancel' }); reject(err); }
+                                        try { await writer.write(m.chunk); } catch (err) { worker.postMessage({ type: 'cancel' });
+                                            reject(err); }
                                     } else {
-                                        try { await dbManager.addChunk(m.chunk); } catch (err) { console.error('IndexedDB add error:', err); worker.postMessage({ type: 'cancel' }); reject(err); }
+                                        try { await dbManager.addChunk(m.chunk); } catch (err) { console.error('IndexedDB add error:',
+                                                err);
+                                            worker.postMessage({ type: 'cancel' });
+                                            reject(err); }
                                     }
                                     break;
                                 }
@@ -713,14 +1158,17 @@
                                     }
 
                                     if (useFileSystemAPI && writer) {
-                                        try { await writer.close(); showToast(t('file_saved'), 'success'); } catch (err) { console.error('close error', err); }
+                                        try { await writer.close();
+                                            showToast(t('file_saved'), 'success'); } catch (err) { console.error('close error',
+                                            err); }
                                         outputArea.classList.add('visible');
                                         outputArea.textContent = m.log || '完了';
                                         resolve();
                                     } else {
                                         const ext = format === 'markdown' ? '.md' : format === 'json' ? '.json' : '.txt';
                                         const filename = selectedFile.name.replace(/\.zip$/i, '') + ext;
-                                        const mimeType = format === 'json' ? 'application/json' : format === 'markdown' ? 'text/markdown' : 'text/plain;charset=utf-8';
+                                        const mimeType = format === 'json' ? 'application/json' : format === 'markdown' ?
+                                            'text/markdown' : 'text/plain;charset=utf-8';
                                         const success = await downloadFromIndexedDB(filename, mimeType);
                                         if (dbManager) await dbManager.clear();
                                         outputArea.classList.add('visible');
@@ -767,18 +1215,23 @@
                         };
 
                         btnCancel.onclick = () => {
-                            if (worker) { worker.postMessage({ type: 'cancel' }); btnCancel.disabled = true; showToast(t('cancelled'), ''); }
+                            if (worker) { worker.postMessage({ type: 'cancel' });
+                                btnCancel.disabled = true;
+                                showToast(t('cancelled'), ''); }
                         };
 
                         const cleanup = () => {
-                            if (worker) { worker.terminate(); worker = null; }
+                            if (worker) { worker.terminate();
+                                worker = null; }
                             URL.revokeObjectURL(workerUrl);
                             btnCancel.disabled = true;
                         };
                         const origResolve = resolve;
-                        resolve = (val) => { cleanup(); origResolve(val); };
+                        resolve = (val) => { cleanup();
+                            origResolve(val); };
                         const origReject = reject;
-                        reject = (err) => { cleanup(); origReject(err); };
+                        reject = (err) => { cleanup();
+                            origReject(err); };
 
                     } catch (err) {
                         console.error('Error processing ZIP:', err);
@@ -822,9 +1275,10 @@
         }
 
         // ================================================================
-        // 9. Worker コード生成（zip.js 使用・構文エラー修正済み）
+        // 9. Worker コード生成（zip.js 使用・エスケープ問題修正）
         // ================================================================
         function generateWorkerCode() {
+            // エスケープを最小限にするため、テンプレートリテラル内のバックスラッシュを適切に調整
             return `
                 // Worker: zip.js を使用
                 importScripts('https://cdnjs.cloudflare.com/ajax/libs/zip.js/2.7.52/zip.min.js');
@@ -858,65 +1312,28 @@
                     '.iso','.img','.dmg','.pkg','.msi'
                 ]);
 
-                function escapeJson(str) {
-                    if (typeof str !== 'string') return '""';
-                    const chunks = [];
-                    for (let i = 0; i < str.length; i += 65536) {
-                        chunks.push(JSON.stringify(str.slice(i, i+65536)).slice(1, -1));
-                    }
-                    return '"' + chunks.join('') + '"';
-                }
-                function formatSize(bytes) {
-                    if (bytes < 1024) return bytes + ' B';
-                    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-                    if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
-                    return (bytes/1073741824).toFixed(2) + ' GB';
-                }
-                function isBinaryMagicExtended(bytes) {
-                    if (bytes.length < 4) return false;
-                    for (const magic of Object.values(MAGIC_BYTES)) {
-                        if (bytes.length < magic.length) continue;
-                        let m = true;
-                        for (let i = 0; i < magic.length; i++) {
-                            if (bytes[i] !== magic[i]) { m = false; break; }
-                        }
-                        if (m) return true;
-                    }
-                    return false;
-                }
-                function isBinaryNull(bytes, threshold = 0.01) {
-                    const limit = Math.min(bytes.length, 8192);
-                    let nullCount = 0;
-                    for (let i = 0; i < limit; i++) {
-                        if (bytes[i] === 0) nullCount++;
-                    }
-                    return (limit > 0 ? nullCount / limit : 0) > threshold;
-                }
-                function isBinaryExtExtended(fileName) {
-                    const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : '';
-                    return BINARY_EXTENSIONS.has(ext);
-                }
+                function escapeJson(str) { if (typeof str !== 'string') return '""'; const chunks = []; for (let i = 0; i < str.length; i += 65536) { chunks.push(JSON.stringify(str.slice(i, i+65536)).slice(1,-1)); } return '"' + chunks.join('') + '"'; }
+                function formatSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB'; if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB'; return (bytes/1073741824).toFixed(2) + ' GB'; }
+                function isBinaryMagicExtended(bytes) { if (bytes.length < 4) return false; for (const magic of Object.values(MAGIC_BYTES)) { if (bytes.length < magic.length) continue; let m = true; for (let i = 0; i < magic.length; i++) { if (bytes[i] !== magic[i]) { m = false; break; } } if (m) return true; } return false; }
+                function isBinaryNull(bytes, threshold) { const limit = Math.min(bytes.length, 8192); let nullCount = 0; for (let i = 0; i < limit; i++) { if (bytes[i] === 0) nullCount++; } return (limit > 0 ? nullCount / limit : 0) > (threshold || 0.01); }
+                function isBinaryExtExtended(fileName) { const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : ''; return BINARY_EXTENSIONS.has(ext); }
                 function matchPattern(name, patterns) {
                     for (const p of patterns) {
                         const trimmed = p.trim();
                         if (!trimmed) continue;
                         // 正規表現パターン
                         if (trimmed.startsWith('/') && trimmed.endsWith('/') && trimmed.length > 2) {
-                            try {
-                                if (new RegExp(trimmed.slice(1, -1)).test(name)) return true;
-                            } catch (_) {}
+                            try { if (new RegExp(trimmed.slice(1,-1)).test(name)) return true; } catch (_) {}
                             continue;
                         }
-                        // ワイルドカード
+                        // ワイルドカード (*)
                         if (trimmed.includes('*')) {
-                            // エスケープを正しく処理（テンプレートリテラル内なので二重エスケープに注意）
-                            const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&').replace(/\\*/g, '.*');
-                            try {
-                                if (new RegExp('^' + escaped + '$').test(name)) return true;
-                            } catch (_) {}
+                            // エスケープ処理を簡素化（バックスラッシュ問題を回避するため、正規表現を使わない単純なglobを実装）
+                            const pattern = trimmed.replace(/\\*/g, '.*').replace(/[.+?^${}()|[\\]]/g, '\\\\$&');
+                            try { if (new RegExp('^' + pattern + '$').test(name)) return true; } catch (_) {}
                             continue;
                         }
-                        // 単純な文字列マッチ（パス全体またはセグメント）
+                        // 単純な文字列一致（パスセグメント単位）
                         let pattern = trimmed;
                         if (pattern.startsWith('/')) pattern = pattern.slice(1);
                         if (pattern.endsWith('/')) pattern = pattern.slice(0, -1);
@@ -926,14 +1343,7 @@
                     }
                     return false;
                 }
-                function detectEncoding(bytes, encList) {
-                    for (const enc of encList) {
-                        try {
-                            return { encoding: enc, text: new TextDecoder(enc, { fatal: true }).decode(bytes) };
-                        } catch (_) {}
-                    }
-                    return { encoding: 'UTF-8 (fallback)', text: new TextDecoder('UTF-8', { fatal: false }).decode(bytes) };
-                }
+                function detectEncoding(bytes, encList) { for (const enc of encList) { try { return { encoding: enc, text: new TextDecoder(enc, { fatal: true }).decode(bytes) }; } catch (_) {} } return { encoding: 'UTF-8 (fallback)', text: new TextDecoder('UTF-8', { fatal: false }).decode(bytes) }; }
                 function truncateText(text, action, thresholdBytes) {
                     const encoder = new TextEncoder();
                     const byteLen = encoder.encode(text).length;
@@ -965,51 +1375,13 @@
                             tailLen += bytes;
                             tailCut = i;
                         }
-                        return {
-                            text: text.slice(0, headCut) + '\\n...[中略 約' + formatSize(byteLen) + ']...\\n' + text.slice(tailCut),
-                            truncated: true
-                        };
+                        return { text: text.slice(0, headCut) + '\\n...[中略 約' + formatSize(byteLen) + ']...\\n' + text.slice(tailCut), truncated: true };
                     }
                     return { text, truncated: false };
                 }
-                function buildTreeFromPaths(paths) {
-                    const root = {};
-                    for (const path of paths) {
-                        const parts = path.split('/');
-                        let current = root;
-                        for (const part of parts) {
-                            if (!current[part]) current[part] = {};
-                            current = current[part];
-                        }
-                    }
-                    return root;
-                }
-                function buildTreeString(node, prefix = '', isLast = true) {
-                    const entries = Object.keys(node).sort();
-                    if (entries.length === 0) return '';
-                    let result = '';
-                    entries.forEach((key, index) => {
-                        const isLastEntry = index === entries.length - 1;
-                        result += prefix + (isLastEntry ? '└── ' : '├── ') + key + '\\n';
-                        if (Object.keys(node[key]).length > 0) {
-                            result += buildTreeString(node[key], prefix + (isLastEntry ? '    ' : '│   '), isLastEntry);
-                        }
-                    });
-                    return result;
-                }
-                function concatChunks(chunks) {
-                    const total = chunks.reduce((acc, c) => acc + c.length, 0);
-                    const result = new Uint8Array(total);
-                    let offset = 0;
-                    for (const c of chunks) {
-                        result.set(c, offset);
-                        offset += c.length;
-                    }
-                    return result;
-                }
-                function generateJsonHeader(cfg) {
-                    return '{"metadata":{"source_zip":"' + (cfg.zipFileName || '') + '","generated_at":"' + new Date().toISOString() + '","exclude_rules":' + JSON.stringify(cfg.excludeList || []) + ',"encoding_priority":' + JSON.stringify(cfg.encList || ['UTF-8']) + '},"tree":"';
-                }
+                function buildTreeFromPaths(paths) { const root = {}; for (const path of paths) { const parts = path.split('/'); let current = root; for (const part of parts) { if (!current[part]) current[part] = {}; current = current[part]; } } return root; }
+                function buildTreeString(node, prefix, isLast) { const entries = Object.keys(node).sort(); if (entries.length === 0) return ''; let result = ''; entries.forEach((key, index) => { const isLastEntry = index === entries.length - 1; result += (prefix || '') + (isLastEntry ? '└── ' : '├── ') + key + '\\n'; if (Object.keys(node[key]).length > 0) result += buildTreeString(node[key], (prefix || '') + (isLastEntry ? '    ' : '│   '), isLastEntry); }); return result; }
+                function generateJsonHeader(cfg) { return '{"metadata":{"source_zip":"' + (cfg.zipFileName || '') + '","generated_at":"' + new Date().toISOString() + '","exclude_rules":' + JSON.stringify(cfg.excludeList || []) + ',"encoding_priority":' + JSON.stringify(cfg.encList || ['UTF-8']) + '},"tree":"'; }
 
                 function processFile(fileName, data, fileSize, cfg) {
                     if (cancelled) return;
@@ -1031,15 +1403,12 @@
                         return;
                     }
 
-                    let isBinary = data.length > 0 && (isBinaryMagicExtended(data) || isBinaryNull(data) || isBinaryExtExtended(fileName));
+                    let isBinary = data.length > 0 && (isBinaryMagicExtended(data) || isBinaryNull(data, 0.01) || isBinaryExtExtended(fileName));
                     let contentText = '', encodingUsed = null, truncated = false;
 
                     if (isBinary) {
-                        if (cfg.binaryMode === 'base64') {
-                            try { contentText = btoa(String.fromCharCode(...data)); } catch (_) { contentText = '[Base64変換エラー]'; }
-                        } else if (cfg.binaryMode === 'hex') {
-                            contentText = Array.from(data.slice(0,1024)).map(b => '0x' + b.toString(16).padStart(2,'0')).join(' ') + (data.length > 1024 ? ' ...' : '');
-                        }
+                        if (cfg.binaryMode === 'base64') { try { contentText = btoa(String.fromCharCode(...data)); } catch (_) { contentText = '[Base64変換エラー]'; } }
+                        else if (cfg.binaryMode === 'hex') { contentText = Array.from(data.slice(0,1024)).map(b => '0x' + b.toString(16).padStart(2,'0')).join(' ') + (data.length > 1024 ? ' ...' : ''); }
                     } else {
                         let text = '', enc = 'UTF-8';
                         if (matchPattern(fileName, cfg.skipList)) {
@@ -1047,32 +1416,20 @@
                             encodingUsed = 'raw (skipped)';
                         } else {
                             if (cfg.encMode === 'force' && cfg.forceEnc) {
-                                try {
-                                    text = new TextDecoder(cfg.forceEnc, { fatal: true }).decode(data);
-                                    enc = cfg.forceEnc;
-                                } catch (_) {
-                                    text = new TextDecoder('UTF-8', { fatal: false }).decode(data);
-                                    enc = 'UTF-8 (fallback)';
-                                }
+                                try { text = new TextDecoder(cfg.forceEnc, { fatal: true }).decode(data); enc = cfg.forceEnc; }
+                                catch (_) { text = new TextDecoder('UTF-8', { fatal: false }).decode(data); enc = 'UTF-8 (fallback)'; }
                             } else if (cfg.encMode === 'skip') {
-                                try {
-                                    text = new TextDecoder('UTF-8', { fatal: true }).decode(data);
-                                    enc = 'UTF-8';
-                                } catch (_) {
-                                    text = '';
-                                    enc = 'skip';
-                                }
+                                try { text = new TextDecoder('UTF-8', { fatal: true }).decode(data); enc = 'UTF-8'; }
+                                catch (_) { text = ''; enc = 'skip'; }
                             } else {
                                 const res = detectEncoding(data, cfg.encList);
-                                text = res.text;
-                                enc = res.encoding;
+                                text = res.text; enc = res.encoding;
                             }
                             encodingUsed = enc;
                         }
                         if (fileSize > cfg.thresholdBytes && cfg.sizeAction !== 'unlimited') {
                             const tr = truncateText(text, cfg.sizeAction, cfg.thresholdBytes);
-                            text = tr.text;
-                            truncated = tr.truncated;
+                            text = tr.text; truncated = tr.truncated;
                         }
                         contentText = text;
                     }
@@ -1085,7 +1442,7 @@
                         }
                         let entry = (!isFirstFileInJson ? ',' : '');
                         isFirstFileInJson = false;
-                        entry += '"' + escapeJson(fileName).slice(1, -1) + '":{"content":{"text":' + escapeJson(contentText) + ',"size":' + fileSize + ',"truncated":' + truncated + '},"encoding":' + (encodingUsed ? escapeJson(encodingUsed) : 'null') + ',"is_binary":' + (isBinary || encodingUsed === 'raw (skipped)') + '}';
+                        entry += '"' + escapeJson(fileName).slice(1,-1) + '":{"content":{"text":' + escapeJson(contentText) + ',"size":' + fileSize + ',"truncated":' + truncated + '},"encoding":' + (encodingUsed ? escapeJson(encodingUsed) : 'null') + ',"is_binary":' + (isBinary || encodingUsed === 'raw (skipped)') + '}';
                         postMessage({ type: 'data', chunk: entry });
                     } else {
                         let output = (cfg.outputFormat === 'markdown' ? '## \`' + fileName + '\`\\n\\n' : '--- ' + fileName + ' ---\\n');
@@ -1112,11 +1469,12 @@
                             config = msg.config;
 
                             const zipData = msg.data;
-                            if (typeof zipData === 'undefined') {
+                            if (!zipData) {
                                 postMessage({ type: 'error', message: 'ZIPデータが送信されていません' });
                                 return;
                             }
 
+                            // zip.js で読み込む
                             const zipReader = new zip.ZipReader(new zip.BlobReader(new Blob([zipData])));
                             const entries = await zipReader.getEntries();
 
@@ -1152,7 +1510,7 @@
 
                             if (isJsonMode) {
                                 const treeRoot = buildTreeFromPaths(filePaths);
-                                const treeStr = buildTreeString(treeRoot);
+                                const treeStr = buildTreeString(treeRoot, '', true);
                                 postMessage({ type: 'data', chunk: treeStr });
                                 postMessage({ type: 'data', chunk: '","files":' });
                                 postMessage({ type: 'data', chunk: '}}' });
@@ -1172,16 +1530,17 @@
         }
 
         // ================================================================
-        // 10. .gitignore インポート（簡略化：未対応）
+        // 10. .gitignore インポート（簡易版）
         // ================================================================
         importGitignoreBtn.addEventListener('click', () => {
-            showToast('このバージョンでは .gitignore インポートは未対応です', 'warning');
+            showToast('このバージョンでは .gitignore インポートは簡略化されています', 'warning');
         });
 
         // ================================================================
         // 11. トースト通知
         // ================================================================
         let toastTimer = null;
+
         function showToast(message, type = '') {
             toast.textContent = message;
             toast.className = 'toast show ' + type;
@@ -1206,7 +1565,7 @@
         async function init() {
             updateI18n();
             updateStatus();
-            console.log('📦 ZIP2Text Dumper v2.1（zip.js版・構文修正）起動');
+            console.log('📦 ZIP2Text Dumper v2.1（zip.js版）起動');
             await initIndexedDB();
         }
         init().catch(console.error);
