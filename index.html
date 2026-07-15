@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZIP2Text Dumper v2.1（zip.js版）</title>
     <style>
-        /* スタイル（前回と同じ） */
+        /* 既存のスタイルと同じ（省略） */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #f6f8fc; color: #1e293b; padding: 20px 16px 40px; line-height: 1.6; }
         a { color: #2563eb; text-decoration: none; }
@@ -94,7 +94,7 @@
     <div class="ad-side" id="adSide"><div class="ad-placeholder">📢 広告枠<br /><span style="font-size:11px;color:#cbd5e1;">(300×250 など)</span></div></div>
     <div class="container">
         <header class="app-header">
-            <h1>📦 ZIP2Text Dumper <small>v2.1（zip.js版）</small></h1>
+            <h1>📦 ZIP2Text Dumper <small>v2.1（zip.js版・構文修正）</small></h1>
             <div class="lang-toggle" id="langToggle">
                 <button class="active" data-lang="ja">日本語</button>
                 <button data-lang="en">English</button>
@@ -117,7 +117,7 @@
             <div class="setting-group">
                 <h3>⛔ <span data-i18n="exclude_title">除外ルール</span> <span class="badge">F-04</span></h3>
                 <label data-i18n="exclude_label">パターン（改行 or カンマ区切り）</label>
-                <textarea id="excludeRules" placeholder="node_modules/, *.log, /\\.tmp$/"></textarea>
+                <textarea id="excludeRules" placeholder="node_modules/, *.log, /\.tmp$/"></textarea>
                 <div class="hint" data-i18n="exclude_hint">正規表現は /pattern/ で記述。.gitignore インポート可能</div>
                 <button class="btn btn-secondary btn-sm import-gitignore" id="importGitignore">📥 .gitignore をインポート</button>
             </div>
@@ -232,7 +232,7 @@
         let dbManager = null;
 
         // ================================================================
-        // 2. 多言語対応
+        // 2. 多言語対応（簡略）
         // ================================================================
         const i18nData = {
             ja: {
@@ -665,6 +665,7 @@
                             skipCompressionErrors: skipCompressionErrors.checked,
                         };
 
+                        // データ全体を Worker に送信
                         worker.postMessage({
                             type: 'start',
                             config: configForWorker,
@@ -821,7 +822,7 @@
         }
 
         // ================================================================
-        // 9. Worker コード生成（zip.js 使用 + 構文エラー修正）
+        // 9. Worker コード生成（zip.js 使用・構文エラー修正済み）
         // ================================================================
         function generateWorkerCode() {
             return `
@@ -857,25 +858,65 @@
                     '.iso','.img','.dmg','.pkg','.msi'
                 ]);
 
-                function escapeJson(str) { if (typeof str !== 'string') return '""'; const chunks = []; for (let i = 0; i < str.length; i += 65536) { chunks.push(JSON.stringify(str.slice(i, i+65536)).slice(1,-1)); } return '"' + chunks.join('') + '"'; }
-                function formatSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB'; if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB'; return (bytes/1073741824).toFixed(2) + ' GB'; }
-                function isBinaryMagicExtended(bytes) { if (bytes.length < 4) return false; for (const magic of Object.values(MAGIC_BYTES)) { if (bytes.length < magic.length) continue; let m = true; for (let i = 0; i < magic.length; i++) { if (bytes[i] !== magic[i]) { m = false; break; } } if (m) return true; } return false; }
-                function isBinaryNull(bytes, threshold = 0.01) { const limit = Math.min(bytes.length, 8192); let nullCount = 0; for (let i = 0; i < limit; i++) { if (bytes[i] === 0) nullCount++; } return (limit > 0 ? nullCount / limit : 0) > threshold; }
-                function isBinaryExtExtended(fileName) { const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : ''; return BINARY_EXTENSIONS.has(ext); }
+                function escapeJson(str) {
+                    if (typeof str !== 'string') return '""';
+                    const chunks = [];
+                    for (let i = 0; i < str.length; i += 65536) {
+                        chunks.push(JSON.stringify(str.slice(i, i+65536)).slice(1, -1));
+                    }
+                    return '"' + chunks.join('') + '"';
+                }
+                function formatSize(bytes) {
+                    if (bytes < 1024) return bytes + ' B';
+                    if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+                    if (bytes < 1073741824) return (bytes/1048576).toFixed(1) + ' MB';
+                    return (bytes/1073741824).toFixed(2) + ' GB';
+                }
+                function isBinaryMagicExtended(bytes) {
+                    if (bytes.length < 4) return false;
+                    for (const magic of Object.values(MAGIC_BYTES)) {
+                        if (bytes.length < magic.length) continue;
+                        let m = true;
+                        for (let i = 0; i < magic.length; i++) {
+                            if (bytes[i] !== magic[i]) { m = false; break; }
+                        }
+                        if (m) return true;
+                    }
+                    return false;
+                }
+                function isBinaryNull(bytes, threshold = 0.01) {
+                    const limit = Math.min(bytes.length, 8192);
+                    let nullCount = 0;
+                    for (let i = 0; i < limit; i++) {
+                        if (bytes[i] === 0) nullCount++;
+                    }
+                    return (limit > 0 ? nullCount / limit : 0) > threshold;
+                }
+                function isBinaryExtExtended(fileName) {
+                    const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : '';
+                    return BINARY_EXTENSIONS.has(ext);
+                }
                 function matchPattern(name, patterns) {
                     for (const p of patterns) {
                         const trimmed = p.trim();
                         if (!trimmed) continue;
+                        // 正規表現パターン
                         if (trimmed.startsWith('/') && trimmed.endsWith('/') && trimmed.length > 2) {
-                            try { if (new RegExp(trimmed.slice(1, -1)).test(name)) return true; } catch (_) {}
+                            try {
+                                if (new RegExp(trimmed.slice(1, -1)).test(name)) return true;
+                            } catch (_) {}
                             continue;
                         }
+                        // ワイルドカード
                         if (trimmed.includes('*')) {
-                            // ★ 修正: バックスラッシュのエスケープを正しく行う
+                            // エスケープを正しく処理（テンプレートリテラル内なので二重エスケープに注意）
                             const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&').replace(/\\*/g, '.*');
-                            try { if (new RegExp('^' + escaped + '$').test(name)) return true; } catch (_) {}
+                            try {
+                                if (new RegExp('^' + escaped + '$').test(name)) return true;
+                            } catch (_) {}
                             continue;
                         }
+                        // 単純な文字列マッチ（パス全体またはセグメント）
                         let pattern = trimmed;
                         if (pattern.startsWith('/')) pattern = pattern.slice(1);
                         if (pattern.endsWith('/')) pattern = pattern.slice(0, -1);
@@ -885,7 +926,14 @@
                     }
                     return false;
                 }
-                function detectEncoding(bytes, encList) { for (const enc of encList) { try { return { encoding: enc, text: new TextDecoder(enc, { fatal: true }).decode(bytes) }; } catch (_) {} } return { encoding: 'UTF-8 (fallback)', text: new TextDecoder('UTF-8', { fatal: false }).decode(bytes) }; }
+                function detectEncoding(bytes, encList) {
+                    for (const enc of encList) {
+                        try {
+                            return { encoding: enc, text: new TextDecoder(enc, { fatal: true }).decode(bytes) };
+                        } catch (_) {}
+                    }
+                    return { encoding: 'UTF-8 (fallback)', text: new TextDecoder('UTF-8', { fatal: false }).decode(bytes) };
+                }
                 function truncateText(text, action, thresholdBytes) {
                     const encoder = new TextEncoder();
                     const byteLen = encoder.encode(text).length;
@@ -917,14 +965,51 @@
                             tailLen += bytes;
                             tailCut = i;
                         }
-                        return { text: text.slice(0, headCut) + '\\n...[中略 約' + formatSize(byteLen) + ']...\\n' + text.slice(tailCut), truncated: true };
+                        return {
+                            text: text.slice(0, headCut) + '\\n...[中略 約' + formatSize(byteLen) + ']...\\n' + text.slice(tailCut),
+                            truncated: true
+                        };
                     }
                     return { text, truncated: false };
                 }
-                function buildTreeFromPaths(paths) { const root = {}; for (const path of paths) { const parts = path.split('/'); let current = root; for (const part of parts) { if (!current[part]) current[part] = {}; current = current[part]; } } return root; }
-                function buildTreeString(node, prefix = '', isLast = true) { const entries = Object.keys(node).sort(); if (entries.length === 0) return ''; let result = ''; entries.forEach((key, index) => { const isLastEntry = index === entries.length - 1; result += prefix + (isLastEntry ? '└── ' : '├── ') + key + '\\n'; if (Object.keys(node[key]).length > 0) result += buildTreeString(node[key], prefix + (isLastEntry ? '    ' : '│   '), isLastEntry); }); return result; }
-                function concatChunks(chunks) { const total = chunks.reduce((acc, c) => acc + c.length, 0); const result = new Uint8Array(total); let offset = 0; for (const c of chunks) { result.set(c, offset); offset += c.length; } return result; }
-                function generateJsonHeader(cfg) { return '{"metadata":{"source_zip":"' + (cfg.zipFileName || '') + '","generated_at":"' + new Date().toISOString() + '","exclude_rules":' + JSON.stringify(cfg.excludeList || []) + ',"encoding_priority":' + JSON.stringify(cfg.encList || ['UTF-8']) + '},"tree":"'; }
+                function buildTreeFromPaths(paths) {
+                    const root = {};
+                    for (const path of paths) {
+                        const parts = path.split('/');
+                        let current = root;
+                        for (const part of parts) {
+                            if (!current[part]) current[part] = {};
+                            current = current[part];
+                        }
+                    }
+                    return root;
+                }
+                function buildTreeString(node, prefix = '', isLast = true) {
+                    const entries = Object.keys(node).sort();
+                    if (entries.length === 0) return '';
+                    let result = '';
+                    entries.forEach((key, index) => {
+                        const isLastEntry = index === entries.length - 1;
+                        result += prefix + (isLastEntry ? '└── ' : '├── ') + key + '\\n';
+                        if (Object.keys(node[key]).length > 0) {
+                            result += buildTreeString(node[key], prefix + (isLastEntry ? '    ' : '│   '), isLastEntry);
+                        }
+                    });
+                    return result;
+                }
+                function concatChunks(chunks) {
+                    const total = chunks.reduce((acc, c) => acc + c.length, 0);
+                    const result = new Uint8Array(total);
+                    let offset = 0;
+                    for (const c of chunks) {
+                        result.set(c, offset);
+                        offset += c.length;
+                    }
+                    return result;
+                }
+                function generateJsonHeader(cfg) {
+                    return '{"metadata":{"source_zip":"' + (cfg.zipFileName || '') + '","generated_at":"' + new Date().toISOString() + '","exclude_rules":' + JSON.stringify(cfg.excludeList || []) + ',"encoding_priority":' + JSON.stringify(cfg.encList || ['UTF-8']) + '},"tree":"';
+                }
 
                 function processFile(fileName, data, fileSize, cfg) {
                     if (cancelled) return;
@@ -950,8 +1035,11 @@
                     let contentText = '', encodingUsed = null, truncated = false;
 
                     if (isBinary) {
-                        if (cfg.binaryMode === 'base64') { try { contentText = btoa(String.fromCharCode(...data)); } catch (_) { contentText = '[Base64変換エラー]'; } }
-                        else if (cfg.binaryMode === 'hex') { contentText = Array.from(data.slice(0,1024)).map(b => '0x' + b.toString(16).padStart(2,'0')).join(' ') + (data.length > 1024 ? ' ...' : ''); }
+                        if (cfg.binaryMode === 'base64') {
+                            try { contentText = btoa(String.fromCharCode(...data)); } catch (_) { contentText = '[Base64変換エラー]'; }
+                        } else if (cfg.binaryMode === 'hex') {
+                            contentText = Array.from(data.slice(0,1024)).map(b => '0x' + b.toString(16).padStart(2,'0')).join(' ') + (data.length > 1024 ? ' ...' : '');
+                        }
                     } else {
                         let text = '', enc = 'UTF-8';
                         if (matchPattern(fileName, cfg.skipList)) {
@@ -959,20 +1047,32 @@
                             encodingUsed = 'raw (skipped)';
                         } else {
                             if (cfg.encMode === 'force' && cfg.forceEnc) {
-                                try { text = new TextDecoder(cfg.forceEnc, { fatal: true }).decode(data); enc = cfg.forceEnc; }
-                                catch (_) { text = new TextDecoder('UTF-8', { fatal: false }).decode(data); enc = 'UTF-8 (fallback)'; }
+                                try {
+                                    text = new TextDecoder(cfg.forceEnc, { fatal: true }).decode(data);
+                                    enc = cfg.forceEnc;
+                                } catch (_) {
+                                    text = new TextDecoder('UTF-8', { fatal: false }).decode(data);
+                                    enc = 'UTF-8 (fallback)';
+                                }
                             } else if (cfg.encMode === 'skip') {
-                                try { text = new TextDecoder('UTF-8', { fatal: true }).decode(data); enc = 'UTF-8'; }
-                                catch (_) { text = ''; enc = 'skip'; }
+                                try {
+                                    text = new TextDecoder('UTF-8', { fatal: true }).decode(data);
+                                    enc = 'UTF-8';
+                                } catch (_) {
+                                    text = '';
+                                    enc = 'skip';
+                                }
                             } else {
                                 const res = detectEncoding(data, cfg.encList);
-                                text = res.text; enc = res.encoding;
+                                text = res.text;
+                                enc = res.encoding;
                             }
                             encodingUsed = enc;
                         }
                         if (fileSize > cfg.thresholdBytes && cfg.sizeAction !== 'unlimited') {
                             const tr = truncateText(text, cfg.sizeAction, cfg.thresholdBytes);
-                            text = tr.text; truncated = tr.truncated;
+                            text = tr.text;
+                            truncated = tr.truncated;
                         }
                         contentText = text;
                     }
@@ -985,7 +1085,7 @@
                         }
                         let entry = (!isFirstFileInJson ? ',' : '');
                         isFirstFileInJson = false;
-                        entry += '"' + escapeJson(fileName).slice(1,-1) + '":{"content":{"text":' + escapeJson(contentText) + ',"size":' + fileSize + ',"truncated":' + truncated + '},"encoding":' + (encodingUsed ? escapeJson(encodingUsed) : 'null') + ',"is_binary":' + (isBinary || encodingUsed === 'raw (skipped)') + '}';
+                        entry += '"' + escapeJson(fileName).slice(1, -1) + '":{"content":{"text":' + escapeJson(contentText) + ',"size":' + fileSize + ',"truncated":' + truncated + '},"encoding":' + (encodingUsed ? escapeJson(encodingUsed) : 'null') + ',"is_binary":' + (isBinary || encodingUsed === 'raw (skipped)') + '}';
                         postMessage({ type: 'data', chunk: entry });
                     } else {
                         let output = (cfg.outputFormat === 'markdown' ? '## \`' + fileName + '\`\\n\\n' : '--- ' + fileName + ' ---\\n');
@@ -1017,7 +1117,6 @@
                                 return;
                             }
 
-                            // zip.js で読み込む
                             const zipReader = new zip.ZipReader(new zip.BlobReader(new Blob([zipData])));
                             const entries = await zipReader.getEntries();
 
@@ -1046,7 +1145,6 @@
 
                             await zipReader.close();
 
-                            // 終了処理
                             if (cancelled) {
                                 postMessage({ type: 'cancelled' });
                                 return;
@@ -1074,7 +1172,7 @@
         }
 
         // ================================================================
-        // 10. .gitignore インポート（簡略化）
+        // 10. .gitignore インポート（簡略化：未対応）
         // ================================================================
         importGitignoreBtn.addEventListener('click', () => {
             showToast('このバージョンでは .gitignore インポートは未対応です', 'warning');
@@ -1108,7 +1206,7 @@
         async function init() {
             updateI18n();
             updateStatus();
-            console.log('📦 ZIP2Text Dumper v2.1（zip.js版）起動');
+            console.log('📦 ZIP2Text Dumper v2.1（zip.js版・構文修正）起動');
             await initIndexedDB();
         }
         init().catch(console.error);
