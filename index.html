@@ -871,7 +871,7 @@
         }
 
         // ================================================================
-        // 10. Worker コード生成（fflate の参照を厳格に修正）
+        // 10. Worker コード生成（fflate の参照を厳格に修正、return 削除）
         // ================================================================
         function generateWorkerCode() {
             return `
@@ -883,7 +883,7 @@
                 if (!fflate || typeof fflate.Unzip !== 'function') {
                     postMessage({ type: 'error', message: 'fflate の読み込みに失敗しました (Unzip が見つかりません)' });
                     self.close();
-                    return;
+                    // return;  ← 削除（トップレベルで return は使えない）
                 }
                 const Unzip = fflate.Unzip;
 
