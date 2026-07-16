@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<!--こんにちは！見ましたね？ -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ZIP2Text Dumper v3.0（unzipit 版）</title>
+    <style>
+        /* 既存のスタイルを維持 + 追加 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; background: #f6f8fc; color: #1e293b; padding: 20px 16px 40px; line-height: 1.6; }
+        a { color: #2563eb; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 1200px; margin: 0 auto; background: #ffffff; border-radius: 28px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); padding: 28px 32px 40px; position: relative; }
+        .app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid #eef2f6; }
+        .app-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.3px; background: linear-gradient(135deg, #1e293b, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .app-header h1 small { font-size: 14px; font-weight: 400; -webkit-text-fill-color: #64748b; background: none; margin-left: 8px; }
+        .lang-toggle { display: flex; gap: 6px; background: #f1f5f9; border-radius: 40px; padding: 4px; }
+        .lang-toggle button { border: none; background: transparent; padding: 6px 18px; border-radius: 30px; font-weight: 600; font-size: 13px; cursor: pointer; color: #64748b; transition: 0.2s; }
+        .lang-toggle button.active { background: #ffffff; color: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .lang-toggle button:hover { color: #0f172a; }
+        /* 広告コンテナ */
+        .ad-container {
+            text-align: center;
+            margin: 20px 0;
+            min-height: 90px;
+            background: #f8fafc;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #d1d9e6;
+            color: #94a3b8;
+            font-size: 13px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .ad-container.hidden-ad {
+            display: none;
+        }
+        .ad-container .ad-placeholder {
+            padding: 10px 20px;
+        }
+        .ad-container iframe, .ad-container img {
+            max-width: 100%;
+            border: 0;
+        }
+        /* 技術的説明 */
+        .tech-section {
+            margin: 32px 0 20px;
+            padding: 24px 28px;
+            background: #fafcff;
+            border-radius: 20px;
+            border: 1px solid #eef2f6;
+        }
+        .tech-section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tech-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+            color: #1e293b;
+        }
+        .tech-section p {
+            margin: 8px 0;
+            color: #334155;
+        }
+        .tech-section ul {
+            padding-left: 24px;
+            margin: 8px 0 16px;
+        }
+        .tech-section ul li {
+            margin-bottom: 6px;
+            color: #334155;
+        }
+        .tech-section .badge-tech {
+            display: inline-block;
+            background: #dbeafe;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 30px;
+            margin-right: 6px;
+        }
+        .footer-links {
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 2px solid #eef2f6;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 40px;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-links a {
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer-links .ko-fi-btn {
+            background: #ff5e5e;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(255,94,94,0.3);
+        }
+        .footer-links .ko-fi-btn:hover {
+            background: #e14e4e;
+            transform: translateY(-2px);
+            text-decoration: none;
+        }
+        .footer-links .soft-btn {
+            background: #eef2f6;
+            color: #1e293b;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .footer-links .soft-btn:hover {
+            background: #e2e8f0;
+            text-decoration: none;
+        }
+        .footer-links .smartlink-btn {
+            background: #eef2f6;
+            color: #1e293b;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 13px;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer-links .smartlink-btn:hover {
+            background: #dbeafe;
+            color: #2563eb;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        .footer-links .smartlink-btn .badge-sm {
+            font-size: 10px;
+            background: #2563eb;
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 30px;
+            font-weight: 700;
+            margin-left: 4px;
+        }
+        /* 以下既存スタイル */
+        .dropzone { border: 3px dashed #d1d9e6; border-radius: 24px; padding: 48px 20px; text-align: center; background: #fafcff; transition: 0.25s; cursor: pointer; position: relative; }
+        .dropzone.dragover { border-color: #3b82f6; background: #eff6ff; }
+        .dropzone .icon { font-size: 56px; display: block; margin-bottom: 10px; opacity: 0.6; }
+        .dropzone h2 { font-size: 20px; font-weight: 600; color: #0f172a; }
+        .dropzone p { color: #64748b; margin-top: 6px; font-size: 15px; }
+        .dropzone input[type="file"] { display: none; }
+        .preview-box { margin-top: 20px; padding: 18px 22px; background: #f8fafc; border-radius: 16px; display: none; flex-wrap: wrap; gap: 18px 40px; align-items: center; border: 1px solid #e2e8f0; }
+        .preview-box.visible { display: flex; }
+        .preview-item { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
+        .preview-item .label { color: #64748b; font-weight: 500; }
+        .preview-item .value { font-weight: 600; color: #0f172a; }
+        .preview-item .value.estimated { color: #f59e0b; }
+        .settings { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 30px; }
+        @media (max-width: 800px) { .settings { grid-template-columns: 1fr; } }
+        .setting-group { background: #fafcff; border-radius: 16px; padding: 16px 20px 20px; border: 1px solid #eef2f6; }
+        .setting-group h3 { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .setting-group h3 .badge { font-size: 11px; background: #dbeafe; color: #2563eb; padding: 0 10px; border-radius: 30px; font-weight: 500; }
+        .setting-group label { display: block; font-size: 13px; font-weight: 500; color: #334155; margin-top: 12px; margin-bottom: 4px; }
+        .setting-group label:first-of-type { margin-top: 0; }
+        .setting-group textarea, .setting-group input[type="text"], .setting-group input[type="number"], .setting-group select { width: 100%; padding: 8px 12px; border: 1px solid #d1d9e6; border-radius: 10px; font-size: 14px; background: #ffffff; transition: 0.2s; font-family: inherit; }
+        .setting-group textarea:focus, .setting-group input:focus, .setting-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+        .setting-group textarea { resize: vertical; min-height: 56px; }
+        .setting-group .hint { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+        .setting-group .radio-group { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-top: 6px; }
+        .setting-group .radio-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 13px; margin-top: 0; cursor: pointer; }
+        .setting-group .radio-group input[type="radio"] { accent-color: #2563eb; width: 16px; height: 16px; cursor: pointer; }
+        .setting-group .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 6px; }
+        .setting-group .checkbox-group label { display: flex; align-items: center; gap: 5px; font-weight: 400; font-size: 13px; margin-top: 0; cursor: pointer; }
+        .setting-group .checkbox-group input[type="checkbox"] { accent-color: #2563eb; width: 16px; height: 16px; cursor: pointer; }
+        .action-row { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+        .btn { padding: 12px 36px; border: none; border-radius: 40px; font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 4px 14px rgba(37,99,235,0.30); }
+        .btn-primary:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #eef2f6; color: #1e293b; }
+        .btn-secondary:hover:not(:disabled) { background: #e2e8f0; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #dc2626; }
+        .btn-sm { padding: 6px 16px; font-size: 13px; border-radius: 30px; }
+        .progress-wrap { margin-top: 20px; display: none; }
+        .progress-wrap.visible { display: block; }
+        .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 30px; overflow: hidden; position: relative; }
+        .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 30px; transition: width 0.25s ease; }
+        .progress-info { display: flex; justify-content: space-between; margin-top: 8px; font-size: 14px; color: #475569; }
+        .progress-info .file-name { font-weight: 500; color: #0f172a; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .progress-info .estimated-badge { font-size: 11px; background: #fef3c7; color: #92400e; padding: 0 8px; border-radius: 12px; margin-left: 8px; }
+        .output-area { margin-top: 22px; padding: 16px 20px; background: #0f172a; border-radius: 16px; color: #e2e8f0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; max-height: 320px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; display: none; }
+        .output-area.visible { display: block; }
+        .output-area .log-line { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .output-area .log-line.error { color: #f87171; }
+        .output-area .log-line.success { color: #6ee7b7; }
+        .output-area .log-line.warning { color: #fbbf24; }
+        .mt-8 { margin-top: 8px; }
+        .text-muted { color: #94a3b8; font-size: 13px; }
+        .flex-wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+        .output-area::-webkit-scrollbar { width: 6px; }
+        .output-area::-webkit-scrollbar-track { background: #1e293b; }
+        .output-area::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        @media (max-width: 640px) { .container { padding: 16px; } .app-header h1 { font-size: 20px; } .dropzone { padding: 28px 12px; } .dropzone .icon { font-size: 40px; } .action-row .btn { width: 100%; justify-content: center; } .ad-container { min-height: 60px; } }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #f1f5f9; padding: 14px 28px; border-radius: 40px; font-weight: 500; font-size: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.3s; max-width: 90%; }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #7f1d1d; color: #fecaca; }
+        .toast.success { background: #065f46; color: #a7f3d0; }
+        .toast.warning { background: #78350f; color: #fde68a; }
+        .import-gitignore { margin-top: 6px; }
+        .tech-section code { background: #eef2f6; padding: 2px 6px; border-radius: 6px; font-size: 0.9em; color: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>📦 ZIP2Text Dumper <small>v3.0（unzipit 版）</small></h1>
+            <div class="lang-toggle" id="langToggle">
+                <button class="active" data-lang="ja">日本語</button>
+                <button data-lang="en">English</button>
+            </div>
+        </header>
+
+        <!-- 広告 (トップ) - Admax SPオーバーレイ 320x100 -->
+        <div class="ad-container" id="adTop">
+            <div class="ad-placeholder">
+                <!-- admax -->
+                <script src="https://adm.shinobi.jp/s/c6e041008475be01c9a6759b1f8b4131"></script>
+                <!-- admax -->
+            </div>
+        </div>
+
+        <!-- ツール本体 -->
+        <div class="dropzone" id="dropzone">
+            <span class="icon">📂</span>
+            <h2 data-i18n="drop_title">ZIP ファイルをドロップ または クリックで選択</h2>
+            <p data-i18n="drop_sub">最大数GBまで対応・ストリーム処理でメモリ節約</p>
+            <input type="file" id="fileInput" accept=".zip" />
+        </div>
+        <div class="preview-box" id="previewBox">
+            <div class="preview-item"><span class="label" data-i18n="preview_files">📄 ファイル数</span><span class="value" id="previewCount">0</span><span class="estimated-badge" id="previewEstimated" style="display:none;font-size:11px;background:#fef3c7;color:#92400e;padding:0 8px;border-radius:12px;">推定</span></div>
+            <div class="preview-item"><span class="label" data-i18n="preview_size">💾 推定出力サイズ</span><span class="value" id="previewSize">—</span></div>
+            <div class="preview-item"><span class="label" data-i18n="preview_zip">📦 ZIP</span><span class="value" id="previewZipName">—</span></div>
+            <button class="btn btn-secondary btn-sm" id="btnClearFile" data-i18n="clear">クリア</button>
+        </div>
+        <div class="settings">
+            <div class="setting-group">
+                <h3>⛔ <span data-i18n="exclude_title">除外ルール</span> <span class="badge">F-04</span></h3>
+                <label data-i18n="exclude_label">パターン（改行 or カンマ区切り）</label>
+                <textarea id="excludeRules" placeholder="node_modules/, *.log, /\.tmp$/"></textarea>
+                <div class="hint" data-i18n="exclude_hint">正規表現は /pattern/ で記述。.gitignore インポート可能</div>
+                <button class="btn btn-secondary btn-sm import-gitignore" id="importGitignore">📥 .gitignore をインポート</button>
+            </div>
+            <div class="setting-group">
+                <h3>🔤 <span data-i18n="encoding_title">文字コード優先順位</span> <span class="badge">F-05</span></h3>
+                <label data-i18n="encoding_label">優先順位（カンマ区切り）</label>
+                <input type="text" id="encodingPriority" value="UTF-8, Shift_JIS, EUC-JP, UTF-16LE" />
+                <div class="hint" data-i18n="encoding_hint">左から順に試行。失敗時は � に置換</div>
+                <div class="radio-group mt-8">
+                    <label><input type="radio" name="encodingMode" value="auto" checked /> <span data-i18n="enc_auto">自動判別</span></label>
+                    <label><input type="radio" name="encodingMode" value="force" /> <span data-i18n="enc_force">強制固定</span></label>
+                    <label><input type="radio" name="encodingMode" value="skip" /> <span data-i18n="enc_skip">エラー行スキップ</span></label>
+                </div>
+                <div class="hint" id="forceEncodingHint" style="display:none;" data-i18n="enc_force_hint">強制するエンコーディング名を入力</div>
+                <input type="text" id="forceEncoding" value="Shift_JIS" style="display:none;margin-top:4px;" />
+            </div>
+            <div class="setting-group">
+                <h3>📏 <span data-i18n="size_title">サイズ制限</span> <span class="badge">F-07</span></h3>
+                <label data-i18n="size_threshold">閾値</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="number" id="sizeThreshold" value="1" style="flex:1;min-width:80px;" step="0.1" min="0" />
+                    <select id="sizeUnit" style="flex:0 0 80px;"><option value="KB">KB</option><option value="MB" selected>MB</option><option value="GB">GB</option></select>
+                </div>
+                <div class="hint" data-i18n="size_hint">このサイズを超えるファイルは下記のルールで処理</div>
+                <div class="radio-group mt-8">
+                    <label><input type="radio" name="sizeAction" value="head" checked /> <span data-i18n="size_head">先頭のみ (10KB)</span></label>
+                    <label><input type="radio" name="sizeAction" value="headtail" /> <span data-i18n="size_headtail">先頭+末尾 (各5KB)</span></label>
+                    <label><input type="radio" name="sizeAction" value="error" /> <span data-i18n="size_error">エラー中断</span></label>
+                    <label><input type="radio" name="sizeAction" value="unlimited" /> <span data-i18n="size_unlimited">上限なし ⚠️</span></label>
+                </div>
+            </div>
+            <div class="setting-group">
+                <h3>📤 <span data-i18n="output_title">出力形式</span> <span class="badge">F-03 / F-06</span></h3>
+                <div class="radio-group">
+                    <label><input type="radio" name="outputFormat" value="plain" checked /> Plain Text</label>
+                    <label><input type="radio" name="outputFormat" value="markdown" /> Markdown</label>
+                    <label><input type="radio" name="outputFormat" value="json" /> JSON (ストリーム)</label>
+                </div>
+                <label data-i18n="binary_mode" style="margin-top:14px;">バイナリファイルの扱い</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="binaryMode" value="catalog" checked /> <span data-i18n="bin_catalog">目録のみ</span></label>
+                    <label><input type="radio" name="binaryMode" value="base64" /> <span data-i18n="bin_base64">Base64埋込 ⚠️</span></label>
+                    <label><input type="radio" name="binaryMode" value="hex" /> <span data-i18n="bin_hex">Hexダンプ</span></label>
+                </div>
+                <div class="hint" data-i18n="bin_hint">Base64/HexはJSONのみ推奨。Plain/MDでは警告表示</div>
+                <label style="margin-top:12px;" data-i18n="skip_encoding_label">文字コード変換をスキップ（生データ）</label>
+                <input type="text" id="skipEncodingFiles" placeholder="*.bin, *.dat, *.raw" value="*.bin, *.dat, *.raw" />
+                <div class="hint" data-i18n="skip_encoding_hint">拡張子・ファイル名パターン（除外ルールと同様）</div>
+                <div class="checkbox-group mt-8">
+                    <label><input type="checkbox" id="skipCompressionErrors" checked /> <span data-i18n="skip_compression_errors">圧縮エラーファイルをスキップ</span></label>
+                </div>
+            </div>
+        </div>
+        <div class="action-row">
+            <button class="btn btn-primary" id="btnStart" disabled data-i18n="start_btn">🚀 変換＆保存</button>
+            <button class="btn btn-danger" id="btnCancel" disabled data-i18n="cancel_btn">⏹ キャンセル</button>
+            <span class="text-muted" id="statusText" data-i18n="ready">ZIPを選択してください</span>
+        </div>
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+            <div class="progress-info">
+                <span class="file-name" id="progressFile">—</span>
+                <span><span id="progressPercent">0%</span><span class="estimated-badge" id="progressEstimated" style="display:none;font-size:11px;background:#fef3c7;color:#92400e;padding:0 8px;border-radius:12px;margin-left:8px;">推定</span></span>
+            </div>
+        </div>
+        <div class="output-area" id="outputArea"></div>
+
+        <!-- 広告 (ミドル) - Admax SPオーバーレイ 320x100 -->
+        <div class="ad-container" id="adMiddle">
+            <div class="ad-placeholder">
+                <!-- admax -->
+                <script src="https://adm.shinobi.jp/s/c6e041008475be01c9a6759b1f8b4131"></script>
+                <!-- admax -->
+            </div>
+        </div>
+
+        <!-- 技術的説明セクション (日英完全対応) -->
+        <section class="tech-section" id="techExplanation">
+            <h2 data-i18n="tech_title">🔧 技術的説明 — 文字化け防止 &amp; プライバシー保護</h2>
+            <p data-i18n="tech_intro">このツールは、ZIPファイル内のテキストデータを安全に抽出し、文字化けを最小限に抑えながら出力します。すべての処理はブラウザ内で完結し、サーバーにデータを送信しません。</p>
+
+            <h3 data-i18n="tech_encoding_title">📄 文字化けを防ぐ技術</h3>
+            <ul>
+                <li data-i18n="tech_encoding_li1"><span class="badge-tech">自動判別</span> <strong>マルチエンコーディング自動検出</strong> — ファイルの先頭バイト、BOM、統計情報を基に UTF-8, Shift_JIS, EUC-JP, UTF-16LE などから最適な文字コードを自動選択。ユーザーが優先順位をカスタマイズ可能。</li>
+                <li data-i18n="tech_encoding_li2"><span class="badge-tech">フォールバック</span> <strong>段階的デコード</strong> — 自動判別に失敗した場合、強制エンコーディングや置換文字（<code>�</code>）を用いて安全に表示。エラー行をスキップするモードも用意。</li>
+                <li data-i18n="tech_encoding_li3"><span class="badge-tech">バイナリ識別</span> <strong>マジックバイト &amp; ヌルバイト検出</strong> — 画像・動画・実行ファイルなどを即座に判別し、テキストとして無理にデコードしないよう保護。Base64・Hexダンプ・目録のみの3モードから選択可能。</li>
+                <li data-i18n="tech_encoding_li4"><span class="badge-tech">サイズ制御</span> <strong>巨大ファイルの切り詰め</strong> — メモリ負荷を避けるため、閾値を超えるファイルは先頭のみ・先頭＋末尾・エラー中断から選択でき、必要以上に大きなテキストを扱わない設計。</li>
+            </ul>
+
+            <h3 data-i18n="tech_privacy_title">🔒 プライバシー保護技術</h3>
+            <ul>
+                <li data-i18n="tech_privacy_li1"><span class="badge-tech">完全ローカル処理</span> — アップロードされたZIPファイルは <strong>サーバーに一切送信されず</strong>、ブラウザ上の JavaScript（unzipit ライブラリ）で処理されます。インターネット接続は広告表示と Ko-fi リンクのみに利用。</li>
+                <li data-i18n="tech_privacy_li2"><span class="badge-tech">安全な一時保存</span> — 出力データは <strong>IndexedDB</strong> に一時保存され、ダウンロード完了後に自動消去。<strong>File System Access API</strong> に対応したブラウザでは、直接ローカルファイルとして保存可能（追加の許可が必要）。</li>
+                <li data-i18n="tech_privacy_li3"><span class="badge-tech">除外ルール</span> — <code>.gitignore</code> インポート機能により、機密情報を含むファイル（パスワード・APIキーなど）を事前に除外可能。正規表現による柔軟なフィルタリング。</li>
+                <li data-i18n="tech_privacy_li4"><span class="badge-tech">データ最小化</span> — バイナリファイルはデフォルトで「目録のみ」出力し、不要なデータの埋め込みを防止。Base64/Hex は任意で有効化。</li>
+            </ul>
+
+            <h3 data-i18n="tech_other_title">⚙️ その他の特長</h3>
+            <ul>
+                <li data-i18n="tech_other_li1"><strong>ストリーム処理</strong> — メモリ使用量を抑え、数GBのZIPファイルでもスムーズに動作。</li>
+                <li data-i18n="tech_other_li2"><strong>多言語対応</strong> — 日本語／英語の表示切替。</li>
+                <li data-i18n="tech_other_li3"><strong>出力形式</strong> — Plain Text, Markdown, JSON から選択可能。</li>
+            </ul>
+            <p style="margin-top:12px;font-size:14px;color:#64748b;" data-i18n="tech_footer">※ 本ツールはオープンソースライブラリ（unzipit）を利用しており、ソースコードは GitHub 等で公開されています。</p>
+        </section>
+
+        <!-- 広告 (ボトム) - Admax SPオーバーレイ 320x100 -->
+        <div class="ad-container" id="adBottom">
+            <div class="ad-placeholder">
+                <!-- admax -->
+                <script src="https://adm.shinobi.jp/s/c6e041008475be01c9a6759b1f8b4131"></script>
+                <!-- admax -->
+            </div>
+        </div>
+
+        <!-- フッター (Ko-fi, ローカルソフト版リンク, SmartLink) -->
+        <div class="footer-links">
+            <a href="https://ko-fi.com/U6O0239L6E" target="_blank" class="ko-fi-btn" title="寄付で開発を応援">
+                ☕ Ko-fi で募金
+            </a>
+            <a href="https://ko-fi.com/yourusername/shop" target="_blank" class="soft-btn" title="ローカルソフト版（スタンドアロン）">
+                🖥️ ローカルソフト版を購入 (すみません。まだ作ってません！ )
+            </a>
+            <a href="https://omg10.com/4/11309957"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="smartlink-btn"
+               id="smartLinkBtn"
+               data-i18n="smartlink_note">
+                ⚡ SmartLink <span class="badge-sm">30分</span>
+                <span style="font-weight:400;color:#64748b;">| 広告表示を30分間抑制</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "unzipit": "https://cdn.jsdelivr.net/npm/unzipit@1.0.0/dist/unzipit.module.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ================================================================
+        // 1. インポート
+        // ================================================================
+        import { unzip } from 'unzipit';
+
+        // ================================================================
+        // 2. DOM 参照
+        // ================================================================
+        const $ = (sel) => document.querySelector(sel);
+        const dropzone = $('#dropzone');
+        const fileInput = $('#fileInput');
+        const previewBox = $('#previewBox');
+        const previewCount = $('#previewCount');
+        const previewEstimated = $('#previewEstimated');
+        const previewSize = $('#previewSize');
+        const previewZipName = $('#previewZipName');
+        const btnClearFile = $('#btnClearFile');
+        const excludeRules = $('#excludeRules');
+        const encodingPriority = $('#encodingPriority');
+        const forceEncoding = $('#forceEncoding');
+        const forceEncodingHint = $('#forceEncodingHint');
+        const sizeThreshold = $('#sizeThreshold');
+        const sizeUnit = $('#sizeUnit');
+        const skipEncodingFiles = $('#skipEncodingFiles');
+        const skipCompressionErrors = $('#skipCompressionErrors');
+        const btnStart = $('#btnStart');
+        const btnCancel = $('#btnCancel');
+        const statusText = $('#statusText');
+        const progressWrap = $('#progressWrap');
+        const progressFill = $('#progressFill');
+        const progressFile = $('#progressFile');
+        const progressPercent = $('#progressPercent');
+        const progressEstimated = $('#progressEstimated');
+        const outputArea = $('#outputArea');
+        const toast = $('#toast');
+        const importGitignoreBtn = $('#importGitignore');
+        const langToggle = $('#langToggle');
+        const smartLinkBtn = $('#smartLinkBtn');
+
+        // 広告コンテナ（表示制御対象）
+        const adTop = $('#adTop');
+        const adMiddle = $('#adMiddle');
+        const adBottom = $('#adBottom');
+        const allAdContainers = [adTop, adMiddle, adBottom];
+
+        let currentLang = 'ja';
+        let selectedFile = null;
+        let isProcessing = false;
+        let isCancelled = false;
+        let isDone = false;
+
+        // ================================================================
+        // 3. 多言語対応（フルテキスト対応）
+        // ================================================================
+        const i18nData = {
+            ja: {
+                // ツールUI
+                drop_title: 'ZIP ファイルをドロップ または クリックで選択',
+                drop_sub: '最大数GBまで対応・ストリーム処理でメモリ節約',
+                preview_files: '📄 ファイル数',
+                preview_size: '💾 推定出力サイズ',
+                preview_zip: '📦 ZIP',
+                clear: 'クリア',
+                exclude_title: '除外ルール',
+                exclude_label: 'パターン（改行 or カンマ区切り）',
+                exclude_hint: '正規表現は /pattern/ で記述。.gitignore インポート可能',
+                encoding_title: '文字コード優先順位',
+                encoding_label: '優先順位（カンマ区切り）',
+                encoding_hint: '左から順に試行。失敗時は � に置換',
+                enc_auto: '自動判別',
+                enc_force: '強制固定',
+                enc_skip: 'エラー行スキップ',
+                enc_force_hint: '強制するエンコーディング名を入力',
+                size_title: 'サイズ制限',
+                size_threshold: '閾値',
+                size_hint: 'このサイズを超えるファイルは下記のルールで処理',
+                size_head: '先頭のみ (10KB)',
+                size_headtail: '先頭+末尾 (各5KB)',
+                size_error: 'エラー中断',
+                size_unlimited: '上限なし ⚠️',
+                output_title: '出力形式',
+                binary_mode: 'バイナリファイルの扱い',
+                bin_catalog: '目録のみ',
+                bin_base64: 'Base64埋込 ⚠️',
+                bin_hex: 'Hexダンプ',
+                bin_hint: 'Base64/HexはJSONのみ推奨。Plain/MDでは警告表示',
+                skip_encoding_label: '文字コード変換をスキップ（生データ）',
+                skip_encoding_hint: '拡張子・ファイル名パターン（除外ルールと同様）',
+                skip_compression_errors: '圧縮エラーファイルをスキップ',
+                start_btn: '🚀 変換＆保存',
+                cancel_btn: '⏹ キャンセル',
+                ready: 'ZIPを選択してください',
+                processing: '処理中...',
+                done: '✅ 完了！',
+                cancelled: '⏹ キャンセルしました',
+                error: '❌ エラー',
+                saving: '保存先を選択中...',
+                select_zip_first: 'ZIPファイルを選択してください',
+                unsupported_browser: 'File System Access API 非対応のため IndexedDB に一時保存します。',
+                large_file_warning: '出力ファイルが非常に大きくなる可能性があります（100MB超）。続行しますか？',
+                import_gitignore_success: '.gitignore をインポートしました',
+                import_gitignore_not_found: 'ZIP内に .gitignore が見つかりません',
+                import_gitignore_hint: 'ZIPを選択してからクリック',
+                file_saved: 'ファイルを保存しました',
+                save_failed: '保存に失敗しました',
+                preparing_download: 'ダウンロード準備中...',
+                download_complete: 'ダウンロード完了',
+                indexeddb_cleared: 'IndexedDB をクリアしました',
+                reading_file: 'ZIPファイルを読み込み中...',
+                smartlink_note: '⚡ SmartLink 30分 | 広告表示を30分間抑制',
+                smartlink_activated: '✅ SmartLink が有効になりました。広告は30分間非表示になります。',
+                smartlink_already_active: '⏳ SmartLink はすでに有効です（残り時間: {remain}分）',
+
+                // 技術説明 (完全日本語)
+                tech_title: '🔧 技術的説明 — 文字化け防止 &amp; プライバシー保護',
+                tech_intro: 'このツールは、ZIPファイル内のテキストデータを安全に抽出し、文字化けを最小限に抑えながら出力します。すべての処理はブラウザ内で完結し、サーバーにデータを送信しません。',
+                tech_encoding_title: '📄 文字化けを防ぐ技術',
+                tech_encoding_li1: `<span class="badge-tech">自動判別</span> <strong>マルチエンコーディング自動検出</strong> — ファイルの先頭バイト、BOM、統計情報を基に UTF-8, Shift_JIS, EUC-JP, UTF-16LE などから最適な文字コードを自動選択。ユーザーが優先順位をカスタマイズ可能。`,
+                tech_encoding_li2: `<span class="badge-tech">フォールバック</span> <strong>段階的デコード</strong> — 自動判別に失敗した場合、強制エンコーディングや置換文字（<code>�</code>）を用いて安全に表示。エラー行をスキップするモードも用意。`,
+                tech_encoding_li3: `<span class="badge-tech">バイナリ識別</span> <strong>マジックバイト &amp; ヌルバイト検出</strong> — 画像・動画・実行ファイルなどを即座に判別し、テキストとして無理にデコードしないよう保護。Base64・Hexダンプ・目録のみの3モードから選択可能。`,
+                tech_encoding_li4: `<span class="badge-tech">サイズ制御</span> <strong>巨大ファイルの切り詰め</strong> — メモリ負荷を避けるため、閾値を超えるファイルは先頭のみ・先頭＋末尾・エラー中断から選択でき、必要以上に大きなテキストを扱わない設計。`,
+                tech_privacy_title: '🔒 プライバシー保護技術',
+                tech_privacy_li1: `<span class="badge-tech">完全ローカル処理</span> — アップロードされたZIPファイルは <strong>サーバーに一切送信されず</strong>、ブラウザ上の JavaScript（unzipit ライブラリ）で処理されます。インターネット接続は広告表示と Ko-fi リンクのみに利用。`,
+                tech_privacy_li2: `<span class="badge-tech">安全な一時保存</span> — 出力データは <strong>IndexedDB</strong> に一時保存され、ダウンロード完了後に自動消去。<strong>File System Access API</strong> に対応したブラウザでは、直接ローカルファイルとして保存可能（追加の許可が必要）。`,
+                tech_privacy_li3: `<span class="badge-tech">除外ルール</span> — <code>.gitignore</code> インポート機能により、機密情報を含むファイル（パスワード・APIキーなど）を事前に除外可能。正規表現による柔軟なフィルタリング。`,
+                tech_privacy_li4: `<span class="badge-tech">データ最小化</span> — バイナリファイルはデフォルトで「目録のみ」出力し、不要なデータの埋め込みを防止。Base64/Hex は任意で有効化。`,
+                tech_other_title: '⚙️ その他の特長',
+                tech_other_li1: `<strong>ストリーム処理</strong> — メモリ使用量を抑え、数GBのZIPファイルでもスムーズに動作。`,
+                tech_other_li2: `<strong>多言語対応</strong> — 日本語／英語の表示切替。`,
+                tech_other_li3: `<strong>出力形式</strong> — Plain Text, Markdown, JSON から選択可能。`,
+                tech_footer: '※ 本ツールはオープンソースライブラリ（unzipit）を利用しており、ソースコードは GitHub 等で公開されています。',
+            },
+            en: {
+                // Tool UI
+                drop_title: 'Drop ZIP file or click to select',
+                drop_sub: 'Supports up to several GB · Stream processing saves memory',
+                preview_files: '📄 Files',
+                preview_size: '💾 Est. output size',
+                preview_zip: '📦 ZIP',
+                clear: 'Clear',
+                exclude_title: 'Exclude Rules',
+                exclude_label: 'Patterns (newline or comma separated)',
+                exclude_hint: 'Regex: /pattern/. .gitignore import available',
+                encoding_title: 'Encoding Priority',
+                encoding_label: 'Priority order (comma separated)',
+                encoding_hint: 'Trial in order. Replaces invalid bytes with �',
+                enc_auto: 'Auto detect',
+                enc_force: 'Force fixed',
+                enc_skip: 'Skip error lines',
+                enc_force_hint: 'Enter encoding name to force',
+                size_title: 'Size Limit',
+                size_threshold: 'Threshold',
+                size_hint: 'Files exceeding this size are handled by the rule below',
+                size_head: 'Head only (10KB)',
+                size_headtail: 'Head+Tail (5KB each)',
+                size_error: 'Error abort',
+                size_unlimited: 'No limit ⚠️',
+                output_title: 'Output Format',
+                binary_mode: 'Binary file handling',
+                bin_catalog: 'Catalog only',
+                bin_base64: 'Base64 embed ⚠️',
+                bin_hex: 'Hex dump',
+                bin_hint: 'Base64/Hex recommended only for JSON. Warning for Plain/MD',
+                skip_encoding_label: 'Skip encoding conversion (raw data)',
+                skip_encoding_hint: 'Patterns (same as exclude rules)',
+                skip_compression_errors: 'Skip files with compression errors',
+                start_btn: '🚀 Convert & Save',
+                cancel_btn: '⏹ Cancel',
+                ready: 'Select a ZIP file',
+                processing: 'Processing...',
+                done: '✅ Done!',
+                cancelled: '⏹ Cancelled',
+                error: '❌ Error',
+                saving: 'Select save destination...',
+                select_zip_first: 'Please select a ZIP file',
+                unsupported_browser: 'File System Access API not supported. Saving to IndexedDB temporarily.',
+                large_file_warning: 'Output file may be very large (>100MB). Continue?',
+                import_gitignore_success: '.gitignore imported',
+                import_gitignore_not_found: '.gitignore not found in ZIP',
+                import_gitignore_hint: 'Select a ZIP first',
+                file_saved: 'File saved',
+                save_failed: 'Save failed',
+                preparing_download: 'Preparing download...',
+                download_complete: 'Download complete',
+                indexeddb_cleared: 'IndexedDB cleared',
+                reading_file: 'Reading ZIP file...',
+                smartlink_note: '⚡ SmartLink 30min | Suppress ads for 30 minutes',
+                smartlink_activated: '✅ SmartLink activated. Ads will be hidden for 30 minutes.',
+                smartlink_already_active: '⏳ SmartLink is already active ({remain} min remaining)',
+
+                // Technical Explanation (Full English)
+                tech_title: '🔧 Technical Explanation — Anti-Garbled &amp; Privacy Protection',
+                tech_intro: 'This tool safely extracts text data from ZIP files and outputs it with minimal garbled characters. All processing is completed within the browser and no data is sent to any server.',
+                tech_encoding_title: '📄 Anti-Garbled Technology',
+                tech_encoding_li1: `<span class="badge-tech">Auto-Detect</span> <strong>Multi-encoding auto-detection</strong> — Automatically selects the optimal character encoding from UTF-8, Shift_JIS, EUC-JP, UTF-16LE, etc., based on header bytes, BOM, and statistical analysis. Users can customize the priority order.`,
+                tech_encoding_li2: `<span class="badge-tech">Fallback</span> <strong>Graceful decoding</strong> — If auto-detection fails, it safely displays using forced encoding or replacement characters (<code>�</code>). A skip-error-lines mode is also available.`,
+                tech_encoding_li3: `<span class="badge-tech">Binary Detection</span> <strong>Magic bytes &amp; null byte detection</strong> — Instantly identifies images, videos, executables, etc., to prevent forced text decoding. Offers 3 modes: Catalog only, Base64, and Hex dump.`,
+                tech_encoding_li4: `<span class="badge-tech">Size Control</span> <strong>Large file truncation</strong> — To avoid memory overload, files exceeding the threshold can be handled by head-only, head+tail, or error abort, ensuring no unnecessarily large text is processed.`,
+                tech_privacy_title: '🔒 Privacy Protection Technology',
+                tech_privacy_li1: `<span class="badge-tech">Fully Local</span> — Uploaded ZIP files are <strong>never sent to any server</strong>; they are processed entirely in the browser using JavaScript (unzipit library). Internet connection is only used for ad display and Ko-fi links.`,
+                tech_privacy_li2: `<span class="badge-tech">Secure Temp Storage</span> — Output data is temporarily stored in <strong>IndexedDB</strong> and automatically cleared after download. In browsers supporting the <strong>File System Access API</strong>, files can be saved directly to the local file system (additional permission required).`,
+                tech_privacy_li3: `<span class="badge-tech">Exclude Rules</span> — With the <code>.gitignore</code> import feature, files containing sensitive information (passwords, API keys, etc.) can be filtered out in advance using flexible regex patterns.`,
+                tech_privacy_li4: `<span class="badge-tech">Data Minimization</span> — Binary files default to "catalog only" output, preventing unnecessary data embedding. Base64/Hex can be optionally enabled.`,
+                tech_other_title: '⚙️ Other Features',
+                tech_other_li1: `<strong>Stream Processing</strong> — Low memory footprint, handles multi-gigabyte ZIP files smoothly.`,
+                tech_other_li2: `<strong>Multi-language</strong> — Seamless switching between Japanese and English.`,
+                tech_other_li3: `<strong>Output Formats</strong> — Choose from Plain Text, Markdown, or JSON.`,
+                tech_footer: '* This tool uses the open-source library (unzipit) and its source code is available on GitHub and other platforms.',
+            }
+        };
+
+        function t(key) { return i18nData[currentLang]?.[key] || i18nData.ja[key] || key; }
+
+        function updateI18n() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerHTML = t(key);
+            });
+        }
+
+        langToggle.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const lang = btn.dataset.lang;
+            if (lang === currentLang) return;
+            currentLang = lang;
+            langToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+            updateI18n();
+            updateStatus();
+        });
+
+        function updateStatus() {
+            if (!selectedFile) statusText.textContent = t('ready');
+            else if (isProcessing) statusText.textContent = t('processing');
+            else if (isDone) statusText.textContent = t('done');
+            else statusText.textContent = selectedFile.name;
+        }
+
+        // ================================================================
+        // 4. IndexedDB マネージャ（出力バッファ用）
+        // ================================================================
+        class IndexedDBManager {
+            constructor(dbName = 'ZIP2TextCache', storeName = 'chunks') {
+                this.dbName = dbName;
+                this.storeName = storeName;
+                this.db = null;
+            }
+            async open() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(this.dbName, 1);
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(this.storeName)) {
+                            db.createObjectStore(this.storeName, { keyPath: 'id', autoIncrement: true });
+                        }
+                    };
+                    request.onsuccess = (e) => { this.db = e.target.result;
+                        resolve(); };
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            }
+            async clear() {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) { resolve(); return; }
+                    const tx = this.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const request = store.clear();
+                    request.onsuccess = () => resolve();
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            }
+            async addChunk(chunk) {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) { reject(new Error('IndexedDB not open')); return; }
+                    const tx = this.db.transaction(this.storeName, 'readwrite');
+                    const store = tx.objectStore(this.storeName);
+                    const request = store.add({ data: chunk });
+                    request.onsuccess = () => resolve();
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            }
+            async getAllChunks() {
+                return new Promise((resolve, reject) => {
+                    if (!this.db) { reject(new Error('IndexedDB not open')); return; }
+                    const tx = this.db.transaction(this.storeName, 'readonly');
+                    const store = tx.objectStore(this.storeName);
+                    const request = store.getAll();
+                    request.onsuccess = () => resolve(request.result.map(item => item.data));
+                    request.onerror = (e) => reject(e.target.error);
+                });
+            }
+            async close() { if (this.db) { this.db.close();
+                    this.db = null; } }
+        }
+
+        let dbManager = null;
+        async function initIndexedDB() {
+            try {
+                dbManager = new IndexedDBManager();
+                await dbManager.open();
+                await dbManager.clear();
+                console.log('🗑️ IndexedDB cleared on page load');
+            } catch (err) { console.error('IndexedDB init error:', err); }
+        }
+
+        // ================================================================
+        // 5. ドロップゾーン & ファイル処理
+        // ================================================================
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault();
+            dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.toLowerCase().endsWith('.zip')) handleFile(files[0]);
+            else showToast('ZIPファイルのみ対応しています', 'error');
+        });
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            fileInput.value = '';
+        });
+        btnClearFile.addEventListener('click', clearFile);
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+            return (bytes / 1073741824).toFixed(2) + ' GB';
+        }
+
+        async function handleFile(file) {
+            selectedFile = file;
+            previewZipName.textContent = file.name;
+            previewBox.classList.add('visible');
+            btnStart.disabled = false;
+            updateStatus();
+            previewCount.textContent = '?';
+            previewSize.textContent = formatSize(file.size);
+            previewEstimated.style.display = 'inline';
+            previewCount.textContent = '推定中...';
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            previewBox.classList.remove('visible');
+            btnStart.disabled = true;
+            isDone = false;
+            outputArea.classList.remove('visible');
+            outputArea.textContent = '';
+            updateStatus();
+            if (dbManager) dbManager.clear().catch(console.error);
+        }
+
+        // ================================================================
+        // 6. ダウンロードヘルパー
+        // ================================================================
+        async function downloadFromIndexedDB(filename, mimeType = 'text/plain;charset=utf-8') {
+            try {
+                showToast(t('preparing_download'), '');
+                const chunks = await dbManager.getAllChunks();
+                if (chunks.length === 0) { showToast('出力データがありません', 'error'); return false; }
+                const blob = new Blob(chunks, { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+                showToast(t('download_complete'), 'success');
+                return true;
+            } catch (err) {
+                console.error('Download error:', err);
+                showToast(t('save_failed') + ': ' + err.message, 'error');
+                return false;
+            }
+        }
+
+        // ================================================================
+        // 7. ユーティリティ（バイナリ判定・文字コード・切り詰めなど）
+        // ================================================================
+        const MAGIC_BYTES = {
+            PNG: [0x89,0x50,0x4E,0x47], JPEG: [0xFF,0xD8,0xFF], GIF87: [0x47,0x49,0x46,0x38,0x37,0x61],
+            GIF89: [0x47,0x49,0x46,0x38,0x39,0x61], BMP: [0x42,0x4D], WEBP: [0x52,0x49,0x46,0x46],
+            TIFF_LE: [0x49,0x49,0x2A,0x00], TIFF_BE: [0x4D,0x4D,0x00,0x2A], ICO: [0x00,0x00,0x01,0x00],
+            MP3: [0xFF,0xFB], MP4: [0x00,0x00,0x00,0x18,0x66,0x74,0x79,0x70], AVI: [0x52,0x49,0x46,0x46],
+            WAV: [0x52,0x49,0x46,0x46], FLAC: [0x66,0x4C,0x61,0x43], OGG: [0x4F,0x67,0x67,0x53],
+            TTF: [0x00,0x01,0x00,0x00,0x00], WOFF: [0x77,0x4F,0x46,0x46], WOFF2: [0x77,0x4F,0x46,0x32],
+            OTF: [0x4F,0x54,0x54,0x4F], RAR: [0x52,0x61,0x72,0x21,0x1A,0x07], '7Z': [0x37,0x7A,0xBC,0xAF,0x27,0x1C],
+            GZIP: [0x1F,0x8B], BZIP2: [0x42,0x5A,0x68], PDF: [0x25,0x50,0x44,0x46], ELF: [0x7F,0x45,0x4C,0x46],
+            MACHO: [0xFE,0xED,0xFA,0xCE], SQLITE: [0x53,0x51,0x4C,0x69,0x74,0x65,0x20,0x66,0x6F,0x72,0x6D,0x61,0x74,0x20,0x33,0x00]
+        };
+        const BINARY_EXTENSIONS = new Set([
+            '.exe','.dll','.so','.dylib','.bin','.o','.a','.lib','.class','.pyc','.pyd','.nib','.ax','.sys','.drv',
+            '.png','.jpg','.jpeg','.gif','.bmp','.webp','.tiff','.tif','.ico','.svg','.psd','.ai','.eps',
+            '.mp3','.mp4','.avi','.mov','.wmv','.flv','.mkv','.webm','.wav','.flac','.ogg','.aac','.m4a','.wma',
+            '.zip','.rar','.7z','.tar','.gz','.bz2','.xz','.zst','.ttf','.otf','.woff','.woff2','.eot',
+            '.db','.sqlite','.sqlite3','.mdb','.accdb','.doc','.docx','.xls','.xlsx','.ppt','.pptx','.pdf','.epub','.mobi',
+            '.iso','.img','.dmg','.pkg','.msi'
+        ]);
+
+        function isBinaryMagicExtended(bytes) {
+            if (bytes.length < 4) return false;
+            for (const magic of Object.values(MAGIC_BYTES)) {
+                if (bytes.length < magic.length) continue;
+                let m = true;
+                for (let i = 0; i < magic.length; i++) {
+                    if (bytes[i] !== magic[i]) { m = false; break; }
+                }
+                if (m) return true;
+            }
+            return false;
+        }
+        function isBinaryNull(bytes, threshold = 0.01) {
+            const limit = Math.min(bytes.length, 8192);
+            let nullCount = 0;
+            for (let i = 0; i < limit; i++) {
+                if (bytes[i] === 0) nullCount++;
+            }
+            return (limit > 0 ? nullCount / limit : 0) > threshold;
+        }
+        function isBinaryExtExtended(fileName) {
+            const ext = fileName.includes('.') ? '.' + fileName.split('.').pop().toLowerCase() : '';
+            return BINARY_EXTENSIONS.has(ext);
+        }
+
+        function matchPattern(name, patterns) {
+            for (const p of patterns) {
+                const trimmed = p.trim();
+                if (!trimmed) continue;
+                if (trimmed.startsWith('/') && trimmed.endsWith('/') && trimmed.length > 2) {
+                    try { if (new RegExp(trimmed.slice(1,-1)).test(name)) return true; } catch (_) {}
+                    continue;
+                }
+                if (trimmed.includes('*')) {
+                    const escaped = trimmed.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\\\\\$&').replace(/\\\\\\*/g, '.*');
+                    try { if (new RegExp('^' + escaped + '$').test(name)) return true; } catch (_) {}
+                    continue;
+                }
+                let pattern = trimmed;
+                if (pattern.startsWith('/')) pattern = pattern.slice(1);
+                if (pattern.endsWith('/')) pattern = pattern.slice(0, -1);
+                if (pattern === '') continue;
+                const segments = name.split('/');
+                if (segments.some(seg => seg === pattern)) return true;
+            }
+            return false;
+        }
+
+        function detectEncoding(bytes, encList) {
+            for (const enc of encList) {
+                try {
+                    return { encoding: enc, text: new TextDecoder(enc, { fatal: true }).decode(bytes) };
+                } catch (_) {}
+            }
+            return { encoding: 'UTF-8 (fallback)', text: new TextDecoder('UTF-8', { fatal: false }).decode(bytes) };
+        }
+
+        function truncateText(text, action, thresholdBytes) {
+            const encoder = new TextEncoder();
+            const byteLen = encoder.encode(text).length;
+            if (byteLen <= thresholdBytes) return { text, truncated: false };
+            if (action === 'head') {
+                let cut = 0, len = 0;
+                for (let i = 0; i < text.length; i++) {
+                    const c = text.charCodeAt(i);
+                    const bytes = c <= 0x7F ? 1 : c <= 0x7FF ? 2 : c <= 0xFFFF ? 3 : 4;
+                    if (len + bytes > 10240) break;
+                    len += bytes;
+                    cut = i + 1;
+                }
+                return { text: text.slice(0, cut) + '\n...[中略]...', truncated: true };
+            } else if (action === 'headtail') {
+                let headCut = 0, headLen = 0;
+                for (let i = 0; i < text.length; i++) {
+                    const c = text.charCodeAt(i);
+                    const bytes = c <= 0x7F ? 1 : c <= 0x7FF ? 2 : c <= 0xFFFF ? 3 : 4;
+                    if (headLen + bytes > 5120) break;
+                    headLen += bytes;
+                    headCut = i + 1;
+                }
+                let tailCut = text.length, tailLen = 0;
+                for (let i = text.length - 1; i >= 0; i--) {
+                    const c = text.charCodeAt(i);
+                    const bytes = c <= 0x7F ? 1 : c <= 0x7FF ? 2 : c <= 0xFFFF ? 3 : 4;
+                    if (tailLen + bytes > 5120) break;
+                    tailLen += bytes;
+                    tailCut = i;
+                }
+                return { text: text.slice(0, headCut) + '\n...[中略 約' + formatSize(byteLen) + ']...\n' + text.slice(tailCut), truncated: true };
+            }
+            return { text, truncated: false };
+        }
+
+        function escapeJson(str) {
+            if (typeof str !== 'string') return '""';
+            const chunks = [];
+            for (let i = 0; i < str.length; i += 65536) {
+                chunks.push(JSON.stringify(str.slice(i, i+65536)).slice(1,-1));
+            }
+            return '"' + chunks.join('') + '"';
+        }
+
+        function buildTreeFromPaths(paths) {
+            const root = {};
+            for (const path of paths) {
+                const parts = path.split('/');
+                let current = root;
+                for (const part of parts) {
+                    if (!current[part]) current[part] = {};
+                    current = current[part];
+                }
+            }
+            return root;
+        }
+        function buildTreeString(node, prefix = '', isLast = true) {
+            const entries = Object.keys(node).sort();
+            if (entries.length === 0) return '';
+            let result = '';
+            entries.forEach((key, index) => {
+                const isLastEntry = index === entries.length - 1;
+                result += prefix + (isLastEntry ? '└── ' : '├── ') + key + '\n';
+                if (Object.keys(node[key]).length > 0) {
+                    result += buildTreeString(node[key], prefix + (isLastEntry ? '    ' : '│   '), isLastEntry);
+                }
+            });
+            return result;
+        }
+
+        function generateJsonHeader(cfg) {
+            return '{"metadata":{"source_zip":"' + (cfg.zipFileName || '') + '","generated_at":"' + new Date().toISOString() + '","exclude_rules":' + JSON.stringify(cfg.excludeList || []) + ',"encoding_priority":' + JSON.stringify(cfg.encList || ['UTF-8']) + '},"tree":"';
+        }
+
+        // ================================================================
+        // 8. メイン処理（unzipit 使用）
+        // ================================================================
+        btnStart.addEventListener('click', async () => {
+            if (!selectedFile) { showToast(t('select_zip_first'), 'error'); return; }
+            if (isProcessing) return;
+
+            const config = collectConfig();
+            const format = document.querySelector('input[name="outputFormat"]:checked').value;
+            if (config.sizeAction === 'unlimited' && !confirm(t('large_file_warning'))) return;
+
+            if (dbManager) await dbManager.clear();
+            isProcessing = true;
+            isCancelled = false;
+            isDone = false;
+            btnStart.disabled = true;
+            btnCancel.disabled = false;
+            progressWrap.classList.add('visible');
+            progressFill.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressFile.textContent = '読み込み中...';
+            progressEstimated.style.display = 'none';
+            outputArea.classList.remove('visible');
+            outputArea.textContent = '';
+            statusText.textContent = t('processing');
+
+            try {
+                const { entries } = await unzip(selectedFile);
+                const entryNames = Object.keys(entries);
+                const totalFiles = entryNames.length;
+
+                if (totalFiles === 0) {
+                    showToast('ZIP内にファイルがありません', 'warning');
+                    isProcessing = false;
+                    btnStart.disabled = false;
+                    btnCancel.disabled = true;
+                    updateStatus();
+                    return;
+                }
+
+                const suggestedName = selectedFile.name.replace(/\.zip$/i, '') + (format === 'markdown' ? '.md' : format === 'json' ? '.json' : '.txt');
+                let useFileSystemAPI = false;
+                let writer = null;
+
+                if ('showSaveFilePicker' in window) {
+                    try {
+                        const fileHandle = await window.showSaveFilePicker({
+                            suggestedName: suggestedName,
+                            types: [{
+                                description: format === 'json' ? 'JSON' : format === 'markdown' ? 'Markdown' : 'Text',
+                                accept: {
+                                    [format === 'json' ? 'application/json' : format === 'markdown' ? 'text/markdown' : 'text/plain']: ['.' + (format === 'json' ? 'json' : format === 'markdown' ? 'md' : 'txt')]
+                                }
+                            }]
+                        });
+                        const writable = await fileHandle.createWritable({ keepExistingData: false });
+                        writer = writable.getWriter();
+                        useFileSystemAPI = true;
+                    } catch (err) {
+                        if (err.name === 'AbortError' || err.code === 20) {
+                            showToast('キャンセルしました', '');
+                            btnStart.disabled = false;
+                            btnCancel.disabled = true;
+                            isProcessing = false;
+                            updateStatus();
+                            return;
+                        }
+                        console.warn('File System API fallback to IndexedDB:', err);
+                    }
+                }
+                if (!useFileSystemAPI) showToast(t('unsupported_browser'), 'warning');
+
+                let fileCounter = 0;
+                let filePaths = [];
+                let isJsonMode = false;
+                let isFirstFileInJson = true;
+                const logLines = [];
+
+                function addLog(text, level = 'info') {
+                    logLines.push({ text, level });
+                    outputArea.classList.add('visible');
+                    const line = document.createElement('div');
+                    line.className = 'log-line';
+                    if (level === 'error') line.classList.add('error');
+                    else if (level === 'warning') line.classList.add('warning');
+                    else if (level === 'success') line.classList.add('success');
+                    line.textContent = text;
+                    outputArea.appendChild(line);
+                    outputArea.scrollTop = outputArea.scrollHeight;
+                }
+
+                if (format === 'json') {
+                    // later
+                } else if (format === 'markdown') {
+                    const header = '# ZIP ファイル内容一覧\n\nソース: ' + selectedFile.name + '\n生成日時: ' + new Date().toISOString() + '\n\n';
+                    if (useFileSystemAPI && writer) {
+                        await writer.write(header);
+                    } else {
+                        await dbManager.addChunk(header);
+                    }
+                } else {
+                    const header = 'ZIP ファイル内容一覧\n' + '='.repeat(40) + '\nソース: ' + selectedFile.name + '\n生成日時: ' + new Date().toISOString() + '\n\n';
+                    if (useFileSystemAPI && writer) {
+                        await writer.write(header);
+                    } else {
+                        await dbManager.addChunk(header);
+                    }
+                }
+
+                for (let i = 0; i < entryNames.length; i++) {
+                    if (isCancelled) break;
+
+                    const name = entryNames[i];
+                    const entry = entries[name];
+                    const fileSize = entry.size || 0;
+
+                    const pct = Math.round(((i + 1) / totalFiles) * 100);
+                    progressFill.style.width = pct + '%';
+                    progressPercent.textContent = pct + '%';
+                    progressFile.textContent = name;
+
+                    if (matchPattern(name, config.excludeList)) {
+                        addLog('⏭ 除外: ' + name, 'warning');
+                        continue;
+                    }
+
+                    fileCounter++;
+                    filePaths.push(name);
+
+                    if (config.sizeAction === 'error' && fileSize > config.thresholdBytes) {
+                        const msg = 'ファイルサイズ超過: ' + name + ' (' + formatSize(fileSize) + ')';
+                        addLog('❌ ' + msg, 'error');
+                        showToast(msg, 'error');
+                        isProcessing = false;
+                        btnStart.disabled = false;
+                        btnCancel.disabled = true;
+                        updateStatus();
+                        if (writer) try { await writer.abort(); } catch (_) {}
+                        return;
+                    }
+
+                    let data;
+                    try {
+                        const buf = await entry.arrayBuffer();
+                        data = new Uint8Array(buf);
+                    } catch (err) {
+                        const errorMsg = 'データ読み込みエラー: ' + name + ' - ' + err.message;
+                        addLog('⚠️ ' + errorMsg, 'error');
+                        if (!config.skipCompressionErrors) {
+                            showToast(errorMsg, 'error');
+                            isProcessing = false;
+                            btnStart.disabled = false;
+                            btnCancel.disabled = true;
+                            updateStatus();
+                            if (writer) try { await writer.abort(); } catch (_) {}
+                            return;
+                        }
+                        continue;
+                    }
+
+                    let isBinary = data.length > 0 && (isBinaryMagicExtended(data) || isBinaryNull(data) || isBinaryExtExtended(name));
+                    let contentText = '';
+                    let encodingUsed = null;
+                    let truncated = false;
+
+                    if (isBinary) {
+                        if (config.binaryMode === 'base64') {
+                            try { contentText = btoa(String.fromCharCode(...data)); } catch (_) { contentText = '[Base64変換エラー]'; }
+                        } else if (config.binaryMode === 'hex') {
+                            contentText = Array.from(data.slice(0,1024)).map(b => '0x' + b.toString(16).padStart(2,'0')).join(' ') + (data.length > 1024 ? ' ...' : '');
+                        } else {
+                            contentText = '[バイナリファイル: ' + formatSize(data.length) + ']';
+                        }
+                        encodingUsed = 'binary';
+                    } else {
+                        let text = '';
+                        let enc = 'UTF-8';
+                        if (matchPattern(name, config.skipList)) {
+                            text = new TextDecoder('UTF-8', { fatal: false }).decode(data);
+                            encodingUsed = 'raw (skipped)';
+                        } else {
+                            if (config.encMode === 'force' && config.forceEnc) {
+                                try { text = new TextDecoder(config.forceEnc, { fatal: true }).decode(data); enc = config.forceEnc; }
+                                catch (_) { text = new TextDecoder('UTF-8', { fatal: false }).decode(data); enc = 'UTF-8 (fallback)'; }
+                            } else if (config.encMode === 'skip') {
+                                try { text = new TextDecoder('UTF-8', { fatal: true }).decode(data); enc = 'UTF-8'; }
+                                catch (_) { text = ''; enc = 'skip'; }
+                            } else {
+                                const res = detectEncoding(data, config.encList);
+                                text = res.text;
+                                enc = res.encoding;
+                            }
+                            encodingUsed = enc;
+                        }
+                        if (fileSize > config.thresholdBytes && config.sizeAction !== 'unlimited') {
+                            const tr = truncateText(text, config.sizeAction, config.thresholdBytes);
+                            text = tr.text;
+                            truncated = tr.truncated;
+                        }
+                        contentText = text;
+                    }
+
+                    if (format === 'json') {
+                        if (!isJsonMode) {
+                            isJsonMode = true;
+                            const headerChunk = generateJsonHeader({ zipFileName: selectedFile.name, excludeList: config.excludeList, encList: config.encList }) + '"files":{';
+                            if (useFileSystemAPI && writer) {
+                                await writer.write(headerChunk);
+                            } else {
+                                await dbManager.addChunk(headerChunk);
+                            }
+                            isFirstFileInJson = true;
+                        }
+                        let entryJson = (isFirstFileInJson ? '' : ',');
+                        isFirstFileInJson = false;
+                        entryJson += '"' + escapeJson(name).slice(1,-1) + '":{"content":{"text":' + escapeJson(contentText) + ',"size":' + fileSize + ',"truncated":' + truncated + '},"encoding":' + (encodingUsed ? escapeJson(encodingUsed) : 'null') + ',"is_binary":' + (isBinary || encodingUsed === 'raw (skipped)') + '}';
+                        if (useFileSystemAPI && writer) {
+                            await writer.write(entryJson);
+                        } else {
+                            await dbManager.addChunk(entryJson);
+                        }
+                    } else {
+                        let output = (format === 'markdown' ? '## `' + name + '`\n\n' : '--- ' + name + ' ---\n');
+                        if (isBinary) {
+                            output += '[' + config.binaryMode + '] ' + (config.binaryMode === 'catalog' ? formatSize(data.length) : contentText.slice(0,200)) + '\n';
+                        } else {
+                            output += (format === 'markdown' ? '```' + (encodingUsed || '') + '\n' + contentText + '\n```\n\n' : contentText + '\n\n');
+                        }
+                        if (useFileSystemAPI && writer) {
+                            await writer.write(output);
+                        } else {
+                            await dbManager.addChunk(output);
+                        }
+                    }
+                    addLog((isBinary ? '🔷 バイナリ ' : '📄 テキスト ') + name + ' (' + formatSize(data.length) + ')');
+                }
+
+                if (isCancelled) {
+                    showToast(t('cancelled'), '');
+                    isProcessing = false;
+                    btnStart.disabled = false;
+                    btnCancel.disabled = true;
+                    updateStatus();
+                    if (writer) try { await writer.abort(); } catch (_) {}
+                    return;
+                }
+
+                if (format === 'json' && isJsonMode) {
+                    const treeRoot = buildTreeFromPaths(filePaths);
+                    const treeStr = buildTreeString(treeRoot);
+                    if (useFileSystemAPI && writer) {
+                        await writer.write(treeStr);
+                        await writer.write('","files":');
+                        await writer.write('}}');
+                    } else {
+                        await dbManager.addChunk(treeStr);
+                        await dbManager.addChunk('","files":');
+                        await dbManager.addChunk('}}');
+                    }
+                }
+
+                if (useFileSystemAPI && writer) {
+                    await writer.close();
+                    showToast(t('file_saved'), 'success');
+                } else {
+                    const mimeType = format === 'json' ? 'application/json' : format === 'markdown' ? 'text/markdown' : 'text/plain;charset=utf-8';
+                    await downloadFromIndexedDB(suggestedName, mimeType);
+                }
+
+                isDone = true;
+                isProcessing = false;
+                btnStart.disabled = false;
+                btnCancel.disabled = true;
+                updateStatus();
+                addLog('✅ 処理完了: ' + fileCounter + ' ファイル', 'success');
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                progressFile.textContent = '✔ ' + fileCounter + ' files';
+
+            } catch (err) {
+                console.error(err);
+                showToast(t('error') + ': ' + (err.message || err), 'error');
+                addLog('❌ エラー: ' + (err.message || err), 'error');
+                isProcessing = false;
+                btnStart.disabled = false;
+                btnCancel.disabled = true;
+                updateStatus();
+                if (writer) try { await writer.abort(); } catch (_) {}
+            }
+        });
+
+        btnCancel.addEventListener('click', () => {
+            isCancelled = true;
+            btnCancel.disabled = true;
+            showToast(t('cancelled'), '');
+        });
+
+        // ================================================================
+        // 9. 設定収集
+        // ================================================================
+        function collectConfig() {
+            const excludeRaw = excludeRules.value;
+            const excludeList = excludeRaw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+            const encRaw = encodingPriority.value;
+            const encList = encRaw.split(/[,、\s]+/).map(s => s.trim()).filter(Boolean);
+            const encMode = document.querySelector('input[name="encodingMode"]:checked').value;
+            const forceEnc = forceEncoding.value.trim();
+            const threshold = parseFloat(sizeThreshold.value) || 1;
+            const unit = sizeUnit.value;
+            let thresholdBytes = threshold;
+            if (unit === 'KB') thresholdBytes = threshold * 1024;
+            else if (unit === 'MB') thresholdBytes = threshold * 1048576;
+            else if (unit === 'GB') thresholdBytes = threshold * 1073741824;
+            thresholdBytes = Math.max(0, thresholdBytes);
+            const sizeAction = document.querySelector('input[name="sizeAction"]:checked').value;
+            const outputFormat = document.querySelector('input[name="outputFormat"]:checked').value;
+            const binaryMode = document.querySelector('input[name="binaryMode"]:checked').value;
+            const skipRaw = skipEncodingFiles.value;
+            const skipList = skipRaw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+            return { excludeList, encList, encMode, forceEnc, thresholdBytes, sizeAction, outputFormat, binaryMode, skipList,
+                skipCompressionErrors: skipCompressionErrors.checked };
+        }
+
+        // ================================================================
+        // 10. .gitignore インポート（unzipit 対応）
+        // ================================================================
+        importGitignoreBtn.addEventListener('click', async () => {
+            if (!selectedFile) { showToast(t('import_gitignore_hint'), 'error'); return; }
+            try {
+                const { entries } = await unzip(selectedFile);
+                let gitignoreContent = null;
+                for (const [name, entry] of Object.entries(entries)) {
+                    if (name === '.gitignore' || name.endsWith('/.gitignore')) {
+                        const buf = await entry.arrayBuffer();
+                        gitignoreContent = new TextDecoder('UTF-8', { fatal: false }).decode(buf);
+                        break;
+                    }
+                }
+                if (gitignoreContent) {
+                    const lines = gitignoreContent.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+                    const current = excludeRules.value;
+                    excludeRules.value = current + '\n' + lines.join('\n');
+                    showToast(t('import_gitignore_success'), 'success');
+                } else {
+                    showToast(t('import_gitignore_not_found'), 'error');
+                }
+            } catch (err) {
+                showToast(t('import_gitignore_not_found'), 'error');
+            }
+        });
+
+        // ================================================================
+        // 11. トースト通知
+        // ================================================================
+        let toastTimer = null;
+
+        function showToast(message, type = '') {
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        // ================================================================
+        // 12. 強制エンコーディング表示切替
+        // ================================================================
+        document.querySelectorAll('input[name="encodingMode"]').forEach(el => {
+            el.addEventListener('change', () => {
+                const val = document.querySelector('input[name="encodingMode"]:checked').value;
+                forceEncoding.style.display = val === 'force' ? 'block' : 'none';
+                forceEncodingHint.style.display = val === 'force' ? 'block' : 'none';
+            });
+        });
+
+        // ================================================================
+        // 13. SmartLink 広告制御 (30分間非表示)
+        // ================================================================
+        const AD_KEY = 'zip2text_ad_last_shown';
+        const AD_COOLDOWN = 30 * 60 * 1000; // 30分
+
+        function shouldShowAds() {
+            const last = localStorage.getItem(AD_KEY);
+            if (!last) return true;
+            const elapsed = Date.now() - parseInt(last, 10);
+            return elapsed > AD_COOLDOWN;
+        }
+
+        function getRemainingMinutes() {
+            const last = localStorage.getItem(AD_KEY);
+            if (!last) return 0;
+            const elapsed = Date.now() - parseInt(last, 10);
+            const remaining = Math.max(0, Math.ceil((AD_COOLDOWN - elapsed) / 60000));
+            return remaining;
+        }
+
+        function markAdsShown() {
+            localStorage.setItem(AD_KEY, String(Date.now()));
+        }
+
+        function controlAds() {
+            const show = shouldShowAds();
+            allAdContainers.forEach(el => {
+                if (el) {
+                    el.classList.toggle('hidden-ad', !show);
+                }
+            });
+            if (show) {
+                markAdsShown();
+                console.log('📢 Ads shown (cooldown started)');
+            } else {
+                console.log('⏳ Ads hidden (cooldown active)');
+            }
+        }
+
+        function handleSmartLink(e) {
+            if (!shouldShowAds()) {
+                const remain = getRemainingMinutes();
+                const msg = t('smartlink_already_active').replace('{remain}', remain);
+                showToast(msg, 'warning');
+                return;
+            }
+            markAdsShown();
+            controlAds();
+            const msg = t('smartlink_activated');
+            showToast(msg, 'success');
+            console.log('⚡ SmartLink activated - ads hidden for 30 min');
+        }
+
+        smartLinkBtn.addEventListener('click', handleSmartLink);
+
+        // ページロード時に制御
+        controlAds();
+
+        // 定期的にチェック (1分ごと)
+        setInterval(() => {
+            const anyHidden = allAdContainers.some(el => el && el.classList.contains('hidden-ad'));
+            if (anyHidden && shouldShowAds()) {
+                controlAds();
+            }
+        }, 60000);
+
+        // ================================================================
+        // 14. 初期化
+        // ================================================================
+        async function init() {
+            updateI18n();
+            updateStatus();
+            console.log('📦 ZIP2Text Dumper v3.0（unzipit 版）起動');
+            await initIndexedDB();
+
+            const smartLinkEl = document.getElementById('smartLinkBtn');
+            if (smartLinkEl) {
+                smartLinkEl.innerHTML = t('smartlink_note');
+            }
+        }
+        init().catch(console.error);
+
+        window.__debug = { selectedFile, isProcessing, dbManager, t, collectConfig };
+        //by arikaeru
+    </script>
+</body>
+</html>
